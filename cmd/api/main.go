@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -20,7 +21,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	// Listen for the interrupt signal.
 	<-ctx.Done()
 
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
+	slog.Warn("shutting down gracefully, press Ctrl+C again to force")
 	stop() // Allow Ctrl+C to force shutdown
 
 	// The context is used to inform the server it has 5 seconds to finish
@@ -28,10 +29,10 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := apiServer.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown with error: %v", err)
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 
-	log.Println("Server exiting")
+	slog.Info("Server exiting")
 
 	// Notify the main goroutine that the shutdown is complete
 	done <- true
@@ -40,11 +41,23 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 func main() {
 	server := server.NewServer()
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelDebug,
+		AddSource: true,
+	}))
+	slog.SetDefault(logger)
+
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
+
+	fullURL := server.Addr
+	if server.Addr[0] == ':' {
+		fullURL = "http://localhost" + server.Addr
+	}
+	fmt.Printf("Server starting at: %s\n", fullURL)
 
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
@@ -53,5 +66,5 @@ func main() {
 
 	// Wait for the graceful shutdown to complete
 	<-done
-	log.Println("Graceful shutdown complete.")
+	slog.Info("Graceful shutdown complete.")
 }

@@ -1,4 +1,4 @@
-module BookNexus
+module book_nexus
 
 go 1.25.4
 
