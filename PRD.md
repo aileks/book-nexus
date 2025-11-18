@@ -2,68 +2,60 @@
 
 ## Overview
 
-Book Nexus is a microservice-based backend platform providing a public GraphQL API for book discovery, catalog management, and recommendations. The system uses microservices with gRPC for internal communication, PostgreSQL for persistence, and a React landing page.
+Book Nexus is a **modular monolith** backend platform providing a public GraphQL API for book discovery, catalog management, and recommendations. The system uses **a single Go application with clear internal domain boundaries (DDD)**, PostgreSQL for persistence, and a React landing page.
 
 ## Goals
 
-- Provide a robust API for book catalog and metadata
-- Enable book discovery through filtering, sorting, and recommendations
-- Demonstrate modern microservice architecture with clear bounded contexts
-- Support series tracking and author/publisher information
-- Deploy easily via Docker Compose locally and on VPS/managed containers
+- Provide a robust API for book catalog and metadata.
+- Enable book discovery through filtering, sorting, and recommendations.
+- **Demonstrate a clean, modular monolith architecture** based on Domain-Driven Design (DDD) principles.
+- **Provide a clear architectural path** for future migration of modules (like recommendations) into independent microservices as scale demands.
+- Support series tracking and author/publisher information.
+- Deploy easily via Docker Compose locally and on VPS/managed containers.
 
-## Core Services
+## Core Modules
 
-### books-service
+### books-module
 
-**Responsibility:** Core book catalog and metadata management
-
-**Capabilities:**
-
-- Book admin CRUD with metadata
-- Author and publisher management
-- gRPC API for internal consumption
-- Series support (stretch)
-
-### api-gateway
-
-**Responsibility:** Public GraphQL API aggregating internal services
+**Responsibility:** Core book catalog and metadata management (Bounded Context).
 
 **Capabilities:**
 
-- Single GraphQL endpoint (`/graphql`) for external clients
-- Query books with filters (author, series, publisher, tags, published date range)
-- Sorting and pagination
-- Author and series lookups
-- DataLoader pattern for N+1 prevention
-- Health and metrics endpoints
+- Book admin CRUD with metadata.
+- Author and publisher management.
+- **Exposes Go interfaces** for internal consumption by other modules.
+- Series support (stretch).
 
-### recommendations-service (Stretch)
+### gateway-module
 
-**Responsibility:** Book recommendation engine
+**Responsibility:** Public GraphQL API aggregating data from internal modules.
 
 **Capabilities:**
 
-- Rules-based recommendations (same series, same author, tag overlap)
-- Scored recommendation results
-- gRPC API for gateway consumption
+- Single GraphQL endpoint (`/graphql`) for external clients.
+- Query books with filters (author, series, publisher, tags, published date range).
+- Sorting and pagination.
+- Author and series lookups.
+- **Uses Go interfaces to call `books-module` and `recommendations-module`**.
+- DataLoader pattern for N+1 prevention.
+- Health and metrics endpoints.
 
-### landing (Frontend)
+### recommendations-module (Stretch)
 
-**Responsibility:** Public-facing website
+**Responsibility:** Book recommendation engine (Bounded Context).
 
-**Pages:**
+**Capabilities:**
 
-- Homepage with Book Nexus description
-- API documentation with example queries
-- GraphQL playground/explorer
+- Rules-based recommendations (same series, same author, tag overlap).
+- Scored recommendation results.
+- **Exposes a Go interface** for `gateway-module` consumption.
 
 ## Technical Architecture
 
 **Language:** Go 1.24+  
-**API Layer:** GraphQL (github.com/99designs/gqlgen)
-**Inter-Service:** gRPC (google.golang.org/grpc)
-**Database:** PostgreSQL with schema-per-service, pgx/pgxpool, golang-migrate  
+**API Layer:** GraphQL (github.com/99designs/gqlgen)  
+**Inter-Module Communication:** **Go interfaces**
+**Database:** PostgreSQL with **schema-per-module**, pgx/pgxpool, golang-migrate  
 **Query Layer:** sqlc or GORM  
 **Orchestration:** Docker + docker-compose  
 **Frontend:** React, TypeScript, GraphQL client
@@ -100,6 +92,14 @@ Book Nexus is a microservice-based backend platform providing a public GraphQL A
 - GraphQL queries: `seriesList`, `series`
 - Book series field resolution
 
+## Future Migration Path
+
+This modulith architecture is explicitly designed for future scalability.
+
+- Modules like `recommendations` are loosely coupled and communicate via well-defined Go interfaces.
+- If performance or scaling needs ever require it, a module can be extracted from the monolith into its own independent microservice.
+- To complete the migration, the `gateway-module`'s dependency would be updated to call the new service's gRPC client (which implements the same interface) instead of the local function, requiring minimal changes to the core business logic.
+
 ## Non-Functional Requirements
 
 **Performance:**
@@ -112,25 +112,21 @@ Book Nexus is a microservice-based backend platform providing a public GraphQL A
 **Reliability:**
 
 - Health and readiness endpoints
-- Graceful degradation (recommendations/series failures don't break queries)
-- Circuit breakers on optional services
-- Retry logic with backoff for transient failures
+- **Graceful degradation** (e.g., `recommendations` module failures don't break core book queries)
 
 **Security:**
 
 - Read-only public API initially
 - JWT/API key auth for future admin operations
-- Internal gRPC services not publicly exposed
-- Optional mTLS for inter-service communication
 - Query depth and complexity protection
 
 ## Success Criteria
 
 - ✓ GraphQL API successfully returns paginated, filtered book lists
 - ✓ Sub-second response times for typical queries
-- ✓ All services deployable via `docker-compose up`
+- ✓ Application and database deployable via `docker-compose up`
 - ✓ Landing page functional with docs and search
-- ✓ 80%+ test coverage on core services
+- ✓ 80%+ test coverage on core modules
 - ✓ Series and recommendations features functional (stretch)
 
 ## v1 Out of Scope
@@ -139,5 +135,5 @@ Book Nexus is a microservice-based backend platform providing a public GraphQL A
 - Book ratings/reviews
 - Full-text search
 - Image/cover management
-- Admin UI (API-only via gRPC/future endpoints)
+- Admin UI (API-only)
 - Multi-language book content
