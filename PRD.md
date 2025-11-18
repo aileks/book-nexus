@@ -2,14 +2,14 @@
 
 ## Overview
 
-Book Nexus is a **modular monolith** backend platform providing a public GraphQL API for book discovery, catalog management, and recommendations. The system uses **a single Go application with clear internal domain boundaries (DDD)**, PostgreSQL for persistence, and a React landing page.
+Book Nexus is a backend platform providing a public GraphQL API and pseudo-search engine for book discovery, catalog management, and recommendations. The system uses a single Go application with clear internal domain boundaries (DDD), PostgreSQL for persistence, and a React landing page.
 
 ## Goals
 
 - Provide a robust API for book catalog and metadata.
 - Enable book discovery through filtering, sorting, and recommendations.
-- **Demonstrate a clean, modular monolith architecture** based on Domain-Driven Design (DDD) principles.
-- **Provide a clear architectural path** for future migration of modules (like recommendations) into independent microservices as scale demands.
+- Demonstrate a clean, modular monolith architecture based on DDD principles.
+- Provide a clear architectural path for future migration of modules into independent microservices.
 - Support series tracking and author/publisher information.
 - Deploy easily via Docker Compose locally and on VPS/managed containers.
 
@@ -17,14 +17,14 @@ Book Nexus is a **modular monolith** backend platform providing a public GraphQL
 
 ### books-module
 
-**Responsibility:** Core book catalog and metadata management (Bounded Context).
+**Responsibility:** Core book catalog and metadata management.
 
 **Capabilities:**
 
 - Book admin CRUD with metadata.
 - Author and publisher management.
-- **Exposes Go interfaces** for internal consumption by other modules.
-- Series support (stretch).
+- Exposes Go interfaces for internal consumption by other modules.
+- Series support.
 
 ### gateway-module
 
@@ -36,13 +36,13 @@ Book Nexus is a **modular monolith** backend platform providing a public GraphQL
 - Query books with filters (author, series, publisher, tags, published date range).
 - Sorting and pagination.
 - Author and series lookups.
-- **Uses Go interfaces to call `books-module` and `recommendations-module`**.
+- Uses Go interfaces to call `books-module` and `recommendations-module`.
 - DataLoader pattern for N+1 prevention.
 - Health and metrics endpoints.
 
-### recommendations-module (Stretch)
+### recommendations-module
 
-**Responsibility:** Book recommendation engine (Bounded Context).
+**Responsibility:** Book recommendation engine.
 
 **Capabilities:**
 
@@ -54,9 +54,9 @@ Book Nexus is a **modular monolith** backend platform providing a public GraphQL
 
 **Language:** Go 1.24+  
 **API Layer:** GraphQL (github.com/99designs/gqlgen)  
-**Inter-Module Communication:** **Go interfaces**
-**Database:** PostgreSQL with **schema-per-module**, pgx/pgxpool, golang-migrate  
-**Query Layer:** sqlc or GORM  
+**Inter-Module Communication:** Go interfaces
+**Database:** PostgreSQL with schema-per-module, pgx/pgxpool, golang-migrate  
+**Query Layer:** sqlc or Bun
 **Orchestration:** Docker + docker-compose  
 **Frontend:** React, TypeScript, GraphQL client
 
@@ -102,19 +102,19 @@ This modulith architecture is explicitly designed for future scalability.
 
 ## Non-Functional Requirements
 
-**Performance:**
+### Performance
 
 - Pagination enforced (max limits)
 - DataLoader batching to prevent N+1
 - Connection pooling for database
 - GraphQL complexity limits
 
-**Reliability:**
+### Reliability:
 
 - Health and readiness endpoints
 - **Graceful degradation** (e.g., `recommendations` module failures don't break core book queries)
 
-**Security:**
+### Security:
 
 - Read-only public API initially
 - JWT/API key auth for future admin operations
@@ -127,7 +127,7 @@ This modulith architecture is explicitly designed for future scalability.
 - ✓ Application and database deployable via `docker-compose up`
 - ✓ Landing page functional with docs and search
 - ✓ 80%+ test coverage on core modules
-- ✓ Series and recommendations features functional (stretch)
+- ✓ Series and recommendations features functional
 
 ## v1 Out of Scope
 
