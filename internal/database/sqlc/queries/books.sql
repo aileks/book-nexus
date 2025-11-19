@@ -30,7 +30,7 @@ WHERE isbn13 = $1;
 -- name: CreateBook :one
 INSERT INTO books (title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-RETURNING id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at;
+RETURNING *;
 
 -- name: UpdateBook :exec
 UPDATE books
