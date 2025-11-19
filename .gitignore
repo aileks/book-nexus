@@ -16,6 +16,5 @@ go.work
 tmp/
 main
 *templ.go
-internal/database/sqlc/*.go
 .DS_Store
 # vendor/
