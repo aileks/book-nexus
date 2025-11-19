@@ -12,6 +12,17 @@ build:
 # Run the application
 run:
 	@go run cmd/api/main.go
+
+# Seed the database from CSV file
+seed:
+	@echo "Seeding database..."
+	@go run cmd/seed/main.go
+
+# Seed the database from a custom CSV file
+seed-csv:
+	@echo "Seeding database from custom CSV..."
+	@go run cmd/seed/main.go -csv $(CSV)
+
 # Create DB container
 docker-run:
 	@if docker compose up --build 2>/dev/null; then \
@@ -34,6 +45,7 @@ docker-down:
 test:
 	@echo "Testing..."
 	@go test ./... -v
+
 # Integrations Tests for the application
 itest:
 	@echo "Running integration tests..."
@@ -61,4 +73,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+.PHONY: all build run test clean watch docker-run docker-down docker-seed itest seed seed-csv

@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"book_nexus/internal/server"
+	"book-nexus/internal/database"
+	migration "book-nexus/internal/database/migrations"
+	"book-nexus/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -39,6 +41,14 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	dbService := database.New()
+	db := dbService.DB()
+
+	if err := migration.RunMigrations(db); err != nil {
+		slog.Error("Failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+
 	server := server.NewServer()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{

@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"book_nexus/internal/database"
+	"book-nexus/internal/database"
 )
 
 type Server struct {

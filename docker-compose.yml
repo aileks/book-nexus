@@ -17,11 +17,11 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       DATABASE_SCHEMA: ${DATABASE_SCHEMA}
     depends_on:
-      psql_bp:
+      psql:
         condition: service_healthy
     networks:
       - blueprint
-  psql_bp:
+  psql:
     image: postgres:latest
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
     ports:
       - "${DATABASE_PORT}:5432"
     volumes:
-      - psql_volume_bp:/var/lib/postgresql/data
+      - psql_volume_bp:/var/lib/postgresql
     healthcheck:
       test:
         [
