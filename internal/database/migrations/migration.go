@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"database/sql"
+	"context"
 	"embed"
 	"encoding/csv"
 	"fmt"
@@ -12,23 +12,28 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
 //go:embed *.sql
 var migrationsFS embed.FS
 
-func RunMigrations(db *sql.DB) error {
+func RunMigrations(pool *pgxpool.Pool) error {
 	schema := os.Getenv("DATABASE_SCHEMA")
 	if schema == "" {
 		schema = "public"
 	}
 
+	ctx := context.Background()
+
 	if schema != "public" {
 		// Quote identifier to handle special characters safely
 		quotedSchema := fmt.Sprintf(`"%s"`, strings.ReplaceAll(schema, `"`, `""`))
 		createSchemaSQL := fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", quotedSchema)
-		if _, err := db.Exec(createSchemaSQL); err != nil {
+		if _, err := pool.Exec(ctx, createSchemaSQL); err != nil {
 			return fmt.Errorf("failed to create schema %s: %w", schema, err)
 		}
 		log.Printf("Schema %s ensured", schema)
@@ -36,7 +41,7 @@ func RunMigrations(db *sql.DB) error {
 
 	// Set the search path for this connection to ensure migrations run in the correct schema
 	quotedSchema := fmt.Sprintf(`"%s"`, strings.ReplaceAll(schema, `"`, `""`))
-	if _, err := db.Exec(fmt.Sprintf("SET search_path TO %s", quotedSchema)); err != nil {
+	if _, err := pool.Exec(ctx, fmt.Sprintf("SET search_path TO %s", quotedSchema)); err != nil {
 		return fmt.Errorf("failed to set search_path: %w", err)
 	}
 
@@ -46,7 +51,11 @@ func RunMigrations(db *sql.DB) error {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	if err := goose.Up(db, "."); err != nil {
+	// Convert pgxpool to sql.DB using stdlib driver
+	sqlDB := stdlib.OpenDB(*pool.Config().ConnConfig)
+	defer sqlDB.Close()
+
+	if err := goose.Up(sqlDB, "."); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -54,14 +63,17 @@ func RunMigrations(db *sql.DB) error {
 	return nil
 }
 
-func MigrateDown(db *sql.DB) error {
+func MigrateDown(pool *pgxpool.Pool) error {
 	goose.SetBaseFS(migrationsFS)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	if err := goose.Down(db, "."); err != nil {
+	sqlDB := stdlib.OpenDB(*pool.Config().ConnConfig)
+	defer sqlDB.Close()
+
+	if err := goose.Down(sqlDB, "."); err != nil {
 		return fmt.Errorf("failed to rollback migration: %w", err)
 	}
 
@@ -69,14 +81,17 @@ func MigrateDown(db *sql.DB) error {
 	return nil
 }
 
-func MigrateToVersion(db *sql.DB, version int64) error {
+func MigrateToVersion(pool *pgxpool.Pool, version int64) error {
 	goose.SetBaseFS(migrationsFS)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	if err := goose.UpTo(db, ".", version); err != nil {
+	sqlDB := stdlib.OpenDB(*pool.Config().ConnConfig)
+	defer sqlDB.Close()
+
+	if err := goose.UpTo(sqlDB, ".", version); err != nil {
 		return fmt.Errorf("failed to migrate to version %d: %w", version, err)
 	}
 
@@ -84,14 +99,17 @@ func MigrateToVersion(db *sql.DB, version int64) error {
 	return nil
 }
 
-func MigrateReset(db *sql.DB) error {
+func MigrateReset(pool *pgxpool.Pool) error {
 	goose.SetBaseFS(migrationsFS)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	if err := goose.Reset(db, "."); err != nil {
+	sqlDB := stdlib.OpenDB(*pool.Config().ConnConfig)
+	defer sqlDB.Close()
+
+	if err := goose.Reset(sqlDB, "."); err != nil {
 		return fmt.Errorf("failed to reset migrations: %w", err)
 	}
 
@@ -99,14 +117,17 @@ func MigrateReset(db *sql.DB) error {
 	return nil
 }
 
-func MigrateStatus(db *sql.DB) error {
+func MigrateStatus(pool *pgxpool.Pool) error {
 	goose.SetBaseFS(migrationsFS)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	if err := goose.Status(db, "."); err != nil {
+	sqlDB := stdlib.OpenDB(*pool.Config().ConnConfig)
+	defer sqlDB.Close()
+
+	if err := goose.Status(sqlDB, "."); err != nil {
 		return fmt.Errorf("failed to get migration status: %w", err)
 	}
 
@@ -115,7 +136,7 @@ func MigrateStatus(db *sql.DB) error {
 
 // SeedBooks reads the CSV file and inserts book data into the database.
 // It skips rows that already exist (based on ISBN13 if present, or title+author combination).
-func SeedBooks(db *sql.DB, csvPath string) error {
+func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 	file, err := os.Open(csvPath)
 	if err != nil {
 		return fmt.Errorf("failed to open CSV file: %w", err)
@@ -138,24 +159,21 @@ func SeedBooks(db *sql.DB, csvPath string) error {
 		colMap[col] = i
 	}
 
-	// Prepare insert statement
-	// Use ON CONFLICT to skip duplicates based on ISBN13 unique index
+	ctx := context.Background()
+
+	// Use a batch for inserting multiple rows
+	batch := &pgx.Batch{}
+
 	stmt := `INSERT INTO books (
 		title, subtitle, author, publisher, published_date, isbn10, isbn13,
 		pages, language, description, series_name, series_position, genres, tags, image_url
 	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	ON CONFLICT (isbn13) DO NOTHING`
 
-	insertStmt, err := db.Prepare(stmt)
-	if err != nil {
-		return fmt.Errorf("failed to prepare insert statement: %w", err)
-	}
-	defer insertStmt.Close()
-
 	var inserted, skipped int
 	batchSize := 100
 
-	// Process rows in batches
+	// Process rows
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -171,7 +189,7 @@ func SeedBooks(db *sql.DB, csvPath string) error {
 			continue
 		}
 
-		// Extract values (ignoring columns: image_width, image_height, image_color, image_color_name, rating, ratings_count, users_count, users_read_count)
+		// Extract values
 		title := strings.TrimSpace(row[colMap["title"]])
 		subtitle := strings.TrimSpace(row[colMap["subtitle"]])
 		author := strings.TrimSpace(row[colMap["author"]])
@@ -261,29 +279,43 @@ func SeedBooks(db *sql.DB, csvPath string) error {
 			imageURLPtr = &imageURL
 		}
 
-		// Execute insert
-		result, err := insertStmt.Exec(
+		// Queue insert in batch
+		batch.Queue(stmt,
 			title, subtitlePtr, author, publisherPtr, publishedDate,
 			isbn10Ptr, isbn13Ptr, pages, languagePtr, descriptionPtr,
 			seriesNamePtr, seriesPosition, genresPtr, tagsPtr, imageURLPtr,
 		)
-		if err != nil {
-			log.Printf("Error inserting book %s by %s: %v", title, author, err)
-			skipped++
-			continue
-		}
 
-		rowsAffected, _ := result.RowsAffected()
-		if rowsAffected > 0 {
-			inserted++
-		} else {
-			skipped++
+		// Execute batch when it reaches batchSize
+		if batch.Len() >= batchSize {
+			results := pool.SendBatch(ctx, batch)
+			for i := 0; i < batch.Len(); i++ {
+				_, err := results.Exec()
+				if err != nil {
+					log.Printf("Error executing batch insert: %v", err)
+					skipped++
+				} else {
+					inserted++
+				}
+			}
+			results.Close()
+			batch = &pgx.Batch{}
 		}
+	}
 
-		// Log progress every 100 rows
-		if (inserted+skipped)%batchSize == 0 {
-			log.Printf("Processed %d books (inserted: %d, skipped: %d)", inserted+skipped, inserted, skipped)
+	// Execute remaining batch items
+	if batch.Len() > 0 {
+		results := pool.SendBatch(ctx, batch)
+		for i := 0; i < batch.Len(); i++ {
+			_, err := results.Exec()
+			if err != nil {
+				log.Printf("Error executing batch insert: %v", err)
+				skipped++
+			} else {
+				inserted++
+			}
 		}
+		results.Close()
 	}
 
 	log.Printf("Seeding completed: %d books inserted, %d skipped", inserted, skipped)
