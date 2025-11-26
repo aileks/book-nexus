@@ -3,11 +3,11 @@ package server
 import (
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"book-nexus/internal/database/sqlc"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -31,30 +31,34 @@ func (m *mockDB) Queries() *sqlc.Queries {
 }
 
 func TestHealthHandler(t *testing.T) {
+	app := fiber.New()
 	s := &Server{
 		port: 8080,
 		db:   &mockDB{},
+		App:  app,
 	}
+	s.RegisterRoutes()
 
 	req, err := http.NewRequest("GET", "/health", nil)
 	if err != nil {
 		t.Fatalf("error creating request. Err: %v", err)
 	}
 
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(s.healthHandler)
-	handler.ServeHTTP(rr, req)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("error making request to server. Err: %v", err)
+	}
 
 	// Assertions
-	if rr.Code != http.StatusOK {
-		t.Errorf("expected status OK; got %v", rr.Code)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status OK; got %v", resp.StatusCode)
 	}
 
-	if rr.Header().Get("Content-Type") != "application/json" {
-		t.Errorf("expected Content-Type to be application/json; got %v", rr.Header().Get("Content-Type"))
+	if resp.Header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected Content-Type to be application/json; got %v", resp.Header.Get("Content-Type"))
 	}
 
-	body, err := io.ReadAll(rr.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("error reading response body. Err: %v", err)
 	}
