@@ -7,19 +7,162 @@ package graph
 
 import (
 	"book-nexus/graph/model"
+	"book-nexus/internal/database/sqlc"
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// Books is the resolver for the books field.
+func (r *authorResolver) Books(ctx context.Context, obj *model.Author) ([]*sqlc.Book, error) {
+	q := sqlc.New(r.DB.DB())
+	books, err := q.GetBooksByAuthor(ctx, obj.Name)
+	if err != nil {
+		return nil, err
+	}
+	var result []*sqlc.Book
+	for _, b := range books {
+		b := b
+		result = append(result, &b)
+	}
+	return result, nil
 }
 
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+// ID is the resolver for the id field.
+func (r *bookResolver) ID(ctx context.Context, obj *sqlc.Book) (string, error) {
+	return obj.ID.String(), nil
 }
+
+// Author is the resolver for the author field.
+func (r *bookResolver) Author(ctx context.Context, obj *sqlc.Book) (*model.Author, error) {
+	return &model.Author{Name: obj.Author}, nil
+}
+
+// PublishedDate is the resolver for the publishedDate field.
+func (r *bookResolver) PublishedDate(ctx context.Context, obj *sqlc.Book) (*string, error) {
+	if obj.PublishedDate == nil {
+		return nil, nil
+	}
+	s := obj.PublishedDate.Format("2006-01-02")
+	return &s, nil
+}
+
+// CreatedAt is the resolver for the createdAt field.
+func (r *bookResolver) CreatedAt(ctx context.Context, obj *sqlc.Book) (string, error) {
+	return obj.CreatedAt.Format(time.RFC3339), nil
+}
+
+// UpdatedAt is the resolver for the updatedAt field.
+func (r *bookResolver) UpdatedAt(ctx context.Context, obj *sqlc.Book) (string, error) {
+	return obj.UpdatedAt.Format(time.RFC3339), nil
+}
+
+// CreateBook is the resolver for the createBook field.
+func (r *mutationResolver) CreateBook(ctx context.Context, input model.NewBook) (*sqlc.Book, error) {
+	q := sqlc.New(r.DB.DB())
+
+	var publishedDate *time.Time
+	if input.PublishedDate != nil {
+		t, err := time.Parse("2006-01-02", *input.PublishedDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format: %v", err)
+		}
+		publishedDate = &t
+	}
+
+	arg := sqlc.CreateBookParams{
+		Title:         input.Title,
+		Subtitle:      input.Subtitle,
+		Author:        input.Author,
+		Publisher:     input.Publisher,
+		PublishedDate: publishedDate,
+		Isbn10:        input.Isbn10,
+		Isbn13:        input.Isbn13,
+		Language:      input.Language,
+		Description:   input.Description,
+		SeriesName:    input.SeriesName,
+		Genres:        input.Genres,
+		Tags:          input.Tags,
+		ImageUrl:      input.ImageURL,
+	}
+
+	if input.Pages != nil {
+		p := int32(*input.Pages)
+		arg.Pages = &p
+	}
+	if input.SeriesPosition != nil {
+		p := int32(*input.SeriesPosition)
+		arg.SeriesPosition = &p
+	}
+
+	book, err := q.CreateBook(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return &book, nil
+}
+
+// Books is the resolver for the books field.
+func (r *queryResolver) Books(ctx context.Context) ([]*sqlc.Book, error) {
+	q := sqlc.New(r.DB.DB())
+	// Default limit/offset
+	books, err := q.ListBooks(ctx, sqlc.ListBooksParams{
+		Limit:  100,
+		Offset: 0,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var result []*sqlc.Book
+	for _, b := range books {
+		b := b
+		result = append(result, &b)
+	}
+	return result, nil
+}
+
+// Book is the resolver for the book field.
+func (r *queryResolver) Book(ctx context.Context, id string) (*sqlc.Book, error) {
+	q := sqlc.New(r.DB.DB())
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %v", err)
+	}
+	book, err := q.GetBookByID(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+	return &book, nil
+}
+
+// Authors is the resolver for the authors field.
+func (r *queryResolver) Authors(ctx context.Context, search *string) ([]*model.Author, error) {
+	q := sqlc.New(r.DB.DB())
+	var authors []string
+	var err error
+	if search != nil {
+		authors, err = q.SearchAuthors(ctx, search)
+	} else {
+		authors, err = q.ListAuthors(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Author
+	for _, a := range authors {
+		result = append(result, &model.Author{Name: a})
+	}
+	return result, nil
+}
+
+// Author returns AuthorResolver implementation.
+func (r *Resolver) Author() AuthorResolver { return &authorResolver{r} }
+
+// Book returns BookResolver implementation.
+func (r *Resolver) Book() BookResolver { return &bookResolver{r} }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
@@ -27,5 +170,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type authorResolver struct{ *Resolver }
+type bookResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

@@ -243,6 +243,32 @@ func (q *Queries) GetBooksBySeries(ctx context.Context, seriesName *string) ([]B
 	return items, nil
 }
 
+const listAuthors = `-- name: ListAuthors :many
+SELECT DISTINCT author
+FROM books
+ORDER BY author
+`
+
+func (q *Queries) ListAuthors(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listAuthors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var author string
+		if err := rows.Scan(&author); err != nil {
+			return nil, err
+		}
+		items = append(items, author)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listBooks = `-- name: ListBooks :many
 SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
 FROM books
@@ -287,6 +313,33 @@ func (q *Queries) ListBooks(ctx context.Context, arg ListBooksParams) ([]Book, e
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchAuthors = `-- name: SearchAuthors :many
+SELECT DISTINCT author
+FROM books
+WHERE author ILIKE '%' || $1 || '%'
+ORDER BY author
+`
+
+func (q *Queries) SearchAuthors(ctx context.Context, dollar_1 *string) ([]string, error) {
+	rows, err := q.db.Query(ctx, searchAuthors, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var author string
+		if err := rows.Scan(&author); err != nil {
+			return nil, err
+		}
+		items = append(items, author)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

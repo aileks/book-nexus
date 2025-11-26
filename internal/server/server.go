@@ -1,43 +1,46 @@
 package server
 
 import (
-	"book-nexus/graph"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/lru"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/vektah/gqlparser/v2/ast"
+	_ "github.com/joho/godotenv/autoload"
+
+	"book-nexus/internal/database"
 )
 
-const defaultPort = "8080"
+type Server struct {
+	port int
+	db   database.Service
+}
 
-func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
+func NewServer() *http.Server {
+	port := 8080
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		if p, err := strconv.Atoi(envPort); err == nil {
+			port = p
+		} else {
+			slog.Warn("invalid PORT environment variable, using default", "port", port)
+		}
 	}
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	server := &Server{
+		port: port,
+		db:   database.New(),
+	}
 
-	srv.AddTransport(transport.Options{})
-	srv.AddTransport(transport.GET{})
-	srv.AddTransport(transport.POST{})
+	// Declare HTTP server config
+	httpServer := &http.Server{
+		Addr:         fmt.Sprintf(":%d", server.port),
+		Handler:      server.RegisterRoutes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
 
-	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
-
-	srv.Use(extension.Introspection{})
-	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New[string](100),
-	})
-
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	return httpServer
 }

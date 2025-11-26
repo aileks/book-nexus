@@ -45,3 +45,14 @@ SELECT *
 FROM books
 WHERE series_name = $1
 ORDER BY series_position ASC;
+
+-- name: ListAuthors :many
+SELECT DISTINCT author
+FROM books
+ORDER BY author;
+
+-- name: SearchAuthors :many
+SELECT DISTINCT author
+FROM books
+WHERE author ILIKE '%' || $1 || '%'
+ORDER BY author;

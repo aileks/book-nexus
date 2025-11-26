@@ -2,25 +2,35 @@
 
 package model
 
+import (
+	"book-nexus/internal/database/sqlc"
+)
+
+type Author struct {
+	Name  string       `json:"name"`
+	Books []*sqlc.Book `json:"books"`
+}
+
 type Mutation struct {
 }
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type NewBook struct {
+	Title          string  `json:"title"`
+	Subtitle       *string `json:"subtitle,omitempty"`
+	Author         string  `json:"author"`
+	Publisher      *string `json:"publisher,omitempty"`
+	PublishedDate  *string `json:"publishedDate,omitempty"`
+	Isbn10         *string `json:"isbn10,omitempty"`
+	Isbn13         *string `json:"isbn13,omitempty"`
+	Pages          *int32  `json:"pages,omitempty"`
+	Language       *string `json:"language,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	SeriesName     *string `json:"seriesName,omitempty"`
+	SeriesPosition *int32  `json:"seriesPosition,omitempty"`
+	Genres         *string `json:"genres,omitempty"`
+	Tags           *string `json:"tags,omitempty"`
+	ImageURL       *string `json:"imageUrl,omitempty"`
 }
 
 type Query struct {
-}
-
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
-}
-
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
 }
