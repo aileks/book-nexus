@@ -1,24 +1,23 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	_ "github.com/joho/godotenv/autoload"
 
 	"book-nexus/internal/database"
 )
 
 type Server struct {
-	port int
-	db   database.Service
-	App  *fiber.App
+	port       int
+	db         database.Service
+	httpServer *http.Server
 }
 
 func NewServer() *Server {
@@ -31,35 +30,28 @@ func NewServer() *Server {
 		}
 	}
 
-	app := fiber.New(fiber.Config{
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	})
-
-	// Middleware
-	app.Use(logger.New())
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-CSRF-Token",
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-	}))
-
 	server := &Server{
 		port: port,
 		db:   database.New(),
-		App:  app,
 	}
 
-	server.RegisterRoutes()
+	mux := server.setupRoutes()
+
+	server.httpServer = &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  time.Minute,
+	}
 
 	return server
 }
 
 func (s *Server) Listen() error {
-	return s.App.Listen(fmt.Sprintf(":%d", s.port))
+	return s.httpServer.ListenAndServe()
 }
 
-func (s *Server) Shutdown() error {
-	return s.App.Shutdown()
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
 }
