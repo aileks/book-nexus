@@ -1,54 +1,10 @@
-version: 2
-
-run:
-  timeout: 5m
-  tests: true
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
 linters:
   enable:
     - errcheck
+    - goimports
+    - gosimple
     - govet
     - ineffassign
     - staticcheck
+    - typecheck
     - unused
-    - gosec
-    - misspell
-    - prealloc
-    - noctx
-    - wrapcheck
-    - testpackage
-    - thelper
-
-linters-settings:
-  staticcheck:
-    checks:
-      - "all"
-      - "-ST1000"
-      - "-ST1003"
-
-  revive:
-    severity: warning
-    confidence: 0.8
-
-  gocritic:
-    enabled-checks:
-      - appendAssign
-      - boolExprSimplify
-      - emptyStringTest
-      - ifElseChain
-      - rangeExprCopy
-      - unnecessaryDefer
-      - unnecessaryFmt
-
-  gosec:
-    severity: medium
-    confidence: medium
-    excludes:
-      - G104
-
-  misspell:
-    locale: US
