@@ -6,26 +6,21 @@ import (
 	"book-nexus/internal/database/sqlc"
 )
 
-type Author struct {
-	Name  string       `json:"name"`
-	Books []*sqlc.Book `json:"books"`
-}
-
 type Mutation struct {
 }
 
 type NewBook struct {
 	Title          string  `json:"title"`
 	Subtitle       *string `json:"subtitle,omitempty"`
-	Author         string  `json:"author"`
-	Publisher      *string `json:"publisher,omitempty"`
+	AuthorID       string  `json:"authorId"`
+	PublisherID    *string `json:"publisherId,omitempty"`
 	PublishedDate  *string `json:"publishedDate,omitempty"`
 	Isbn10         *string `json:"isbn10,omitempty"`
 	Isbn13         *string `json:"isbn13,omitempty"`
 	Pages          *int32  `json:"pages,omitempty"`
 	Language       *string `json:"language,omitempty"`
 	Description    *string `json:"description,omitempty"`
-	SeriesName     *string `json:"seriesName,omitempty"`
+	SeriesID       *string `json:"seriesId,omitempty"`
 	SeriesPosition *int32  `json:"seriesPosition,omitempty"`
 	Genres         *string `json:"genres,omitempty"`
 	Tags           *string `json:"tags,omitempty"`
@@ -36,27 +31,17 @@ type Query struct {
 }
 
 type SearchBooksInput struct {
-	Query     *string `json:"query,omitempty"`
-	Author    *string `json:"author,omitempty"`
-	Publisher *string `json:"publisher,omitempty"`
-	Series    *string `json:"series,omitempty"`
-	Genres    *string `json:"genres,omitempty"`
-	Tags      *string `json:"tags,omitempty"`
-	SortBy    *string `json:"sortBy,omitempty"`
-	Limit     *int32  `json:"limit,omitempty"`
-	Offset    *int32  `json:"offset,omitempty"`
+	Query       *string `json:"query,omitempty"`
+	AuthorID    *string `json:"authorId,omitempty"`
+	PublisherID *string `json:"publisherId,omitempty"`
+	SeriesID    *string `json:"seriesId,omitempty"`
+	AuthorName  *string `json:"authorName,omitempty"`
+	SortBy      *string `json:"sortBy,omitempty"`
+	Limit       *int32  `json:"limit,omitempty"`
+	Offset      *int32  `json:"offset,omitempty"`
 }
 
 type SearchResult struct {
 	Books []*sqlc.Book `json:"books"`
 	Total int32        `json:"total"`
-}
-
-type Series struct {
-	ID          string       `json:"id"`
-	Name        string       `json:"name"`
-	Slug        *string      `json:"slug,omitempty"`
-	Description *string      `json:"description,omitempty"`
-	Books       []*sqlc.Book `json:"books"`
-	BookCount   int32        `json:"bookCount"`
 }

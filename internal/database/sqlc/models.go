@@ -8,25 +8,53 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type Author struct {
+	ID        uuid.UUID
+	Name      string
+	Slug      *string
+	Bio       *string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
 
 type Book struct {
 	ID             uuid.UUID
 	Title          string
 	Subtitle       *string
-	Author         string
-	Publisher      *string
+	AuthorID       uuid.UUID
+	PublisherID    pgtype.UUID
 	PublishedDate  *time.Time
 	Isbn10         *string
 	Isbn13         *string
 	Pages          *int32
 	Language       *string
 	Description    *string
-	SeriesName     *string
+	SeriesID       pgtype.UUID
 	SeriesPosition *int32
 	Genres         *string
 	Tags           *string
 	ImageUrl       *string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+type Publisher struct {
+	ID        uuid.UUID
+	Name      string
+	Slug      *string
+	Website   *string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type Series struct {
+	ID          uuid.UUID
+	Name        string
+	Slug        *string
+	Description *string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }

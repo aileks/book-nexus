@@ -162,13 +162,48 @@ models:
     fields:
       author:
         resolver: true
+      publisher:
+        resolver: true
+      series:
+        resolver: true
       publishedDate:
         resolver: true
       createdAt:
         resolver: true
       updatedAt:
         resolver: true
+      recommendations:
+        resolver: true
   Author:
+    model: book-nexus/internal/database/sqlc.Author
     fields:
       books:
+        resolver: true
+      bookCount:
+        resolver: true
+      createdAt:
+        resolver: true
+      updatedAt:
+        resolver: true
+  Publisher:
+    model: book-nexus/internal/database/sqlc.Publisher
+    fields:
+      books:
+        resolver: true
+      bookCount:
+        resolver: true
+      createdAt:
+        resolver: true
+      updatedAt:
+        resolver: true
+  Series:
+    model: book-nexus/internal/database/sqlc.Series
+    fields:
+      books:
+        resolver: true
+      bookCount:
+        resolver: true
+      createdAt:
+        resolver: true
+      updatedAt:
         resolver: true

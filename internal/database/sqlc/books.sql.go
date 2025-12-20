@@ -10,16 +10,29 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countBooks = `-- name: CountBooks :one
+SELECT COUNT(*) FROM books
+`
+
+func (q *Queries) CountBooks(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countBooks)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countSearchResults = `-- name: CountSearchResults :one
-SELECT COUNT(*) as total
-FROM books
-WHERE 
-  ($1::text IS NULL OR title ILIKE '%' || $1 || '%')
-  AND ($2::text IS NULL OR author ILIKE '%' || $2 || '%')
-  AND ($3::text IS NULL OR publisher ILIKE '%' || $3 || '%')
-  AND ($4::text IS NULL OR series_name ILIKE '%' || $4 || '%')
+SELECT COUNT(*) FROM books b
+LEFT JOIN authors a ON b.author_id = a.id
+WHERE
+  ($1::text = '' OR b.title ILIKE '%' || $1 || '%')
+  AND ($2::text = '' OR b.author_id::text = $2)
+  AND ($3::text = '' OR b.publisher_id::text = $3)
+  AND ($4::text = '' OR b.series_id::text = $4)
+  AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%')
 `
 
 type CountSearchResultsParams struct {
@@ -27,6 +40,7 @@ type CountSearchResultsParams struct {
 	Column2 string
 	Column3 string
 	Column4 string
+	Column5 string
 }
 
 func (q *Queries) CountSearchResults(ctx context.Context, arg CountSearchResultsParams) (int64, error) {
@@ -35,30 +49,35 @@ func (q *Queries) CountSearchResults(ctx context.Context, arg CountSearchResults
 		arg.Column2,
 		arg.Column3,
 		arg.Column4,
+		arg.Column5,
 	)
-	var total int64
-	err := row.Scan(&total)
-	return total, err
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createBook = `-- name: CreateBook :one
-INSERT INTO books (title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url)
+INSERT INTO books (
+  title, subtitle, author_id, publisher_id, published_date,
+  isbn10, isbn13, pages, language, description,
+  series_id, series_position, genres, tags, image_url
+)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-RETURNING id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
+RETURNING id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at
 `
 
 type CreateBookParams struct {
 	Title          string
 	Subtitle       *string
-	Author         string
-	Publisher      *string
+	AuthorID       uuid.UUID
+	PublisherID    pgtype.UUID
 	PublishedDate  *time.Time
 	Isbn10         *string
 	Isbn13         *string
 	Pages          *int32
 	Language       *string
 	Description    *string
-	SeriesName     *string
+	SeriesID       pgtype.UUID
 	SeriesPosition *int32
 	Genres         *string
 	Tags           *string
@@ -69,15 +88,15 @@ func (q *Queries) CreateBook(ctx context.Context, arg CreateBookParams) (Book, e
 	row := q.db.QueryRow(ctx, createBook,
 		arg.Title,
 		arg.Subtitle,
-		arg.Author,
-		arg.Publisher,
+		arg.AuthorID,
+		arg.PublisherID,
 		arg.PublishedDate,
 		arg.Isbn10,
 		arg.Isbn13,
 		arg.Pages,
 		arg.Language,
 		arg.Description,
-		arg.SeriesName,
+		arg.SeriesID,
 		arg.SeriesPosition,
 		arg.Genres,
 		arg.Tags,
@@ -88,15 +107,15 @@ func (q *Queries) CreateBook(ctx context.Context, arg CreateBookParams) (Book, e
 		&i.ID,
 		&i.Title,
 		&i.Subtitle,
-		&i.Author,
-		&i.Publisher,
+		&i.AuthorID,
+		&i.PublisherID,
 		&i.PublishedDate,
 		&i.Isbn10,
 		&i.Isbn13,
 		&i.Pages,
 		&i.Language,
 		&i.Description,
-		&i.SeriesName,
+		&i.SeriesID,
 		&i.SeriesPosition,
 		&i.Genres,
 		&i.Tags,
@@ -117,9 +136,7 @@ func (q *Queries) DeleteBook(ctx context.Context, id uuid.UUID) error {
 }
 
 const getBookByID = `-- name: GetBookByID :one
-SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
-FROM books
-WHERE id = $1
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books WHERE id = $1
 `
 
 func (q *Queries) GetBookByID(ctx context.Context, id uuid.UUID) (Book, error) {
@@ -129,15 +146,15 @@ func (q *Queries) GetBookByID(ctx context.Context, id uuid.UUID) (Book, error) {
 		&i.ID,
 		&i.Title,
 		&i.Subtitle,
-		&i.Author,
-		&i.Publisher,
+		&i.AuthorID,
+		&i.PublisherID,
 		&i.PublishedDate,
 		&i.Isbn10,
 		&i.Isbn13,
 		&i.Pages,
 		&i.Language,
 		&i.Description,
-		&i.SeriesName,
+		&i.SeriesID,
 		&i.SeriesPosition,
 		&i.Genres,
 		&i.Tags,
@@ -148,74 +165,26 @@ func (q *Queries) GetBookByID(ctx context.Context, id uuid.UUID) (Book, error) {
 	return i, err
 }
 
-const getBooksByAuthor = `-- name: GetBooksByAuthor :many
-SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
-FROM books
-WHERE author = $1
-ORDER BY published_date DESC
+const getBookByISBN10 = `-- name: GetBookByISBN10 :one
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books WHERE isbn10 = $1
 `
 
-func (q *Queries) GetBooksByAuthor(ctx context.Context, author string) ([]Book, error) {
-	rows, err := q.db.Query(ctx, getBooksByAuthor, author)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Book
-	for rows.Next() {
-		var i Book
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.Subtitle,
-			&i.Author,
-			&i.Publisher,
-			&i.PublishedDate,
-			&i.Isbn10,
-			&i.Isbn13,
-			&i.Pages,
-			&i.Language,
-			&i.Description,
-			&i.SeriesName,
-			&i.SeriesPosition,
-			&i.Genres,
-			&i.Tags,
-			&i.ImageUrl,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getBooksByISBN13 = `-- name: GetBooksByISBN13 :one
-SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
-FROM books
-WHERE isbn13 = $1
-`
-
-func (q *Queries) GetBooksByISBN13(ctx context.Context, isbn13 *string) (Book, error) {
-	row := q.db.QueryRow(ctx, getBooksByISBN13, isbn13)
+func (q *Queries) GetBookByISBN10(ctx context.Context, isbn10 *string) (Book, error) {
+	row := q.db.QueryRow(ctx, getBookByISBN10, isbn10)
 	var i Book
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
 		&i.Subtitle,
-		&i.Author,
-		&i.Publisher,
+		&i.AuthorID,
+		&i.PublisherID,
 		&i.PublishedDate,
 		&i.Isbn10,
 		&i.Isbn13,
 		&i.Pages,
 		&i.Language,
 		&i.Description,
-		&i.SeriesName,
+		&i.SeriesID,
 		&i.SeriesPosition,
 		&i.Genres,
 		&i.Tags,
@@ -226,15 +195,119 @@ func (q *Queries) GetBooksByISBN13(ctx context.Context, isbn13 *string) (Book, e
 	return i, err
 }
 
-const getBooksBySeries = `-- name: GetBooksBySeries :many
-SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
-FROM books
-WHERE series_name = $1
-ORDER BY series_position ASC
+const getBookByISBN13 = `-- name: GetBookByISBN13 :one
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books WHERE isbn13 = $1
 `
 
-func (q *Queries) GetBooksBySeries(ctx context.Context, seriesName *string) ([]Book, error) {
-	rows, err := q.db.Query(ctx, getBooksBySeries, seriesName)
+func (q *Queries) GetBookByISBN13(ctx context.Context, isbn13 *string) (Book, error) {
+	row := q.db.QueryRow(ctx, getBookByISBN13, isbn13)
+	var i Book
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Subtitle,
+		&i.AuthorID,
+		&i.PublisherID,
+		&i.PublishedDate,
+		&i.Isbn10,
+		&i.Isbn13,
+		&i.Pages,
+		&i.Language,
+		&i.Description,
+		&i.SeriesID,
+		&i.SeriesPosition,
+		&i.Genres,
+		&i.Tags,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getBookWithRelations = `-- name: GetBookWithRelations :one
+SELECT
+  b.id, b.title, b.subtitle, b.author_id, b.publisher_id, b.published_date, b.isbn10, b.isbn13, b.pages, b.language, b.description, b.series_id, b.series_position, b.genres, b.tags, b.image_url, b.created_at, b.updated_at,
+  a.name as author_name,
+  a.slug as author_slug,
+  p.name as publisher_name,
+  p.slug as publisher_slug,
+  s.name as series_name,
+  s.slug as series_slug
+FROM books b
+JOIN authors a ON b.author_id = a.id
+LEFT JOIN publishers p ON b.publisher_id = p.id
+LEFT JOIN series s ON b.series_id = s.id
+WHERE b.id = $1
+`
+
+type GetBookWithRelationsRow struct {
+	ID             uuid.UUID
+	Title          string
+	Subtitle       *string
+	AuthorID       uuid.UUID
+	PublisherID    pgtype.UUID
+	PublishedDate  *time.Time
+	Isbn10         *string
+	Isbn13         *string
+	Pages          *int32
+	Language       *string
+	Description    *string
+	SeriesID       pgtype.UUID
+	SeriesPosition *int32
+	Genres         *string
+	Tags           *string
+	ImageUrl       *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	AuthorName     string
+	AuthorSlug     *string
+	PublisherName  *string
+	PublisherSlug  *string
+	SeriesName     *string
+	SeriesSlug     *string
+}
+
+func (q *Queries) GetBookWithRelations(ctx context.Context, id uuid.UUID) (GetBookWithRelationsRow, error) {
+	row := q.db.QueryRow(ctx, getBookWithRelations, id)
+	var i GetBookWithRelationsRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Subtitle,
+		&i.AuthorID,
+		&i.PublisherID,
+		&i.PublishedDate,
+		&i.Isbn10,
+		&i.Isbn13,
+		&i.Pages,
+		&i.Language,
+		&i.Description,
+		&i.SeriesID,
+		&i.SeriesPosition,
+		&i.Genres,
+		&i.Tags,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AuthorName,
+		&i.AuthorSlug,
+		&i.PublisherName,
+		&i.PublisherSlug,
+		&i.SeriesName,
+		&i.SeriesSlug,
+	)
+	return i, err
+}
+
+const getBooksByAuthor = `-- name: GetBooksByAuthor :many
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books
+WHERE author_id = $1
+ORDER BY published_date DESC NULLS LAST
+`
+
+func (q *Queries) GetBooksByAuthor(ctx context.Context, authorID uuid.UUID) ([]Book, error) {
+	rows, err := q.db.Query(ctx, getBooksByAuthor, authorID)
 	if err != nil {
 		return nil, err
 	}
@@ -246,15 +319,15 @@ func (q *Queries) GetBooksBySeries(ctx context.Context, seriesName *string) ([]B
 			&i.ID,
 			&i.Title,
 			&i.Subtitle,
-			&i.Author,
-			&i.Publisher,
+			&i.AuthorID,
+			&i.PublisherID,
 			&i.PublishedDate,
 			&i.Isbn10,
 			&i.Isbn13,
 			&i.Pages,
 			&i.Language,
 			&i.Description,
-			&i.SeriesName,
+			&i.SeriesID,
 			&i.SeriesPosition,
 			&i.Genres,
 			&i.Tags,
@@ -272,46 +345,279 @@ func (q *Queries) GetBooksBySeries(ctx context.Context, seriesName *string) ([]B
 	return items, nil
 }
 
-const getSeriesByName = `-- name: GetSeriesByName :one
-SELECT 
-  series_name as name,
-  COUNT(*) as book_count
-FROM books
-WHERE series_name = $1
-GROUP BY series_name
+const getBooksByPublisher = `-- name: GetBooksByPublisher :many
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books
+WHERE publisher_id = $1
+ORDER BY published_date DESC NULLS LAST
 `
 
-type GetSeriesByNameRow struct {
-	Name      *string
-	BookCount int64
-}
-
-func (q *Queries) GetSeriesByName(ctx context.Context, seriesName *string) (GetSeriesByNameRow, error) {
-	row := q.db.QueryRow(ctx, getSeriesByName, seriesName)
-	var i GetSeriesByNameRow
-	err := row.Scan(&i.Name, &i.BookCount)
-	return i, err
-}
-
-const listAuthors = `-- name: ListAuthors :many
-SELECT DISTINCT author
-FROM books
-ORDER BY author
-`
-
-func (q *Queries) ListAuthors(ctx context.Context) ([]string, error) {
-	rows, err := q.db.Query(ctx, listAuthors)
+func (q *Queries) GetBooksByPublisher(ctx context.Context, publisherID pgtype.UUID) ([]Book, error) {
+	rows, err := q.db.Query(ctx, getBooksByPublisher, publisherID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []Book
 	for rows.Next() {
-		var author string
-		if err := rows.Scan(&author); err != nil {
+		var i Book
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Subtitle,
+			&i.AuthorID,
+			&i.PublisherID,
+			&i.PublishedDate,
+			&i.Isbn10,
+			&i.Isbn13,
+			&i.Pages,
+			&i.Language,
+			&i.Description,
+			&i.SeriesID,
+			&i.SeriesPosition,
+			&i.Genres,
+			&i.Tags,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, author)
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getBooksBySeries = `-- name: GetBooksBySeries :many
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books
+WHERE series_id = $1
+ORDER BY series_position ASC NULLS LAST
+`
+
+func (q *Queries) GetBooksBySeries(ctx context.Context, seriesID pgtype.UUID) ([]Book, error) {
+	rows, err := q.db.Query(ctx, getBooksBySeries, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Book
+	for rows.Next() {
+		var i Book
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Subtitle,
+			&i.AuthorID,
+			&i.PublisherID,
+			&i.PublishedDate,
+			&i.Isbn10,
+			&i.Isbn13,
+			&i.Pages,
+			&i.Language,
+			&i.Description,
+			&i.SeriesID,
+			&i.SeriesPosition,
+			&i.Genres,
+			&i.Tags,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRecommendationsByAuthor = `-- name: GetRecommendationsByAuthor :many
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books
+WHERE author_id = $1 AND id != $2
+ORDER BY published_date DESC NULLS LAST
+LIMIT $3
+`
+
+type GetRecommendationsByAuthorParams struct {
+	AuthorID uuid.UUID
+	ID       uuid.UUID
+	Limit    int32
+}
+
+func (q *Queries) GetRecommendationsByAuthor(ctx context.Context, arg GetRecommendationsByAuthorParams) ([]Book, error) {
+	rows, err := q.db.Query(ctx, getRecommendationsByAuthor, arg.AuthorID, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Book
+	for rows.Next() {
+		var i Book
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Subtitle,
+			&i.AuthorID,
+			&i.PublisherID,
+			&i.PublishedDate,
+			&i.Isbn10,
+			&i.Isbn13,
+			&i.Pages,
+			&i.Language,
+			&i.Description,
+			&i.SeriesID,
+			&i.SeriesPosition,
+			&i.Genres,
+			&i.Tags,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRecommendationsBySeries = `-- name: GetRecommendationsBySeries :many
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books
+WHERE series_id = $1 AND id != $2
+ORDER BY series_position ASC NULLS LAST
+LIMIT $3
+`
+
+type GetRecommendationsBySeriesParams struct {
+	SeriesID pgtype.UUID
+	ID       uuid.UUID
+	Limit    int32
+}
+
+func (q *Queries) GetRecommendationsBySeries(ctx context.Context, arg GetRecommendationsBySeriesParams) ([]Book, error) {
+	rows, err := q.db.Query(ctx, getRecommendationsBySeries, arg.SeriesID, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Book
+	for rows.Next() {
+		var i Book
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Subtitle,
+			&i.AuthorID,
+			&i.PublisherID,
+			&i.PublishedDate,
+			&i.Isbn10,
+			&i.Isbn13,
+			&i.Pages,
+			&i.Language,
+			&i.Description,
+			&i.SeriesID,
+			&i.SeriesPosition,
+			&i.Genres,
+			&i.Tags,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRecommendationsByTags = `-- name: GetRecommendationsByTags :many
+SELECT b.id, b.title, b.subtitle, b.author_id, b.publisher_id, b.published_date, b.isbn10, b.isbn13, b.pages, b.language, b.description, b.series_id, b.series_position, b.genres, b.tags, b.image_url, b.created_at, b.updated_at,
+  (
+    SELECT COUNT(*)
+    FROM unnest(string_to_array($2::text, ',')) AS t(tag)
+    WHERE b.tags ILIKE '%' || trim(t.tag) || '%'
+  ) as tag_matches
+FROM books b
+WHERE b.id != $1
+  AND b.tags IS NOT NULL
+  AND EXISTS (
+    SELECT 1 FROM unnest(string_to_array($2::text, ',')) AS t(tag)
+    WHERE b.tags ILIKE '%' || trim(t.tag) || '%'
+  )
+ORDER BY tag_matches DESC, created_at DESC
+LIMIT $3
+`
+
+type GetRecommendationsByTagsParams struct {
+	ID      uuid.UUID
+	Column2 string
+	Limit   int32
+}
+
+type GetRecommendationsByTagsRow struct {
+	ID             uuid.UUID
+	Title          string
+	Subtitle       *string
+	AuthorID       uuid.UUID
+	PublisherID    pgtype.UUID
+	PublishedDate  *time.Time
+	Isbn10         *string
+	Isbn13         *string
+	Pages          *int32
+	Language       *string
+	Description    *string
+	SeriesID       pgtype.UUID
+	SeriesPosition *int32
+	Genres         *string
+	Tags           *string
+	ImageUrl       *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	TagMatches     int64
+}
+
+func (q *Queries) GetRecommendationsByTags(ctx context.Context, arg GetRecommendationsByTagsParams) ([]GetRecommendationsByTagsRow, error) {
+	rows, err := q.db.Query(ctx, getRecommendationsByTags, arg.ID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecommendationsByTagsRow
+	for rows.Next() {
+		var i GetRecommendationsByTagsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Subtitle,
+			&i.AuthorID,
+			&i.PublisherID,
+			&i.PublishedDate,
+			&i.Isbn10,
+			&i.Isbn13,
+			&i.Pages,
+			&i.Language,
+			&i.Description,
+			&i.SeriesID,
+			&i.SeriesPosition,
+			&i.Genres,
+			&i.Tags,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TagMatches,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -320,8 +626,7 @@ func (q *Queries) ListAuthors(ctx context.Context) ([]string, error) {
 }
 
 const listBooks = `-- name: ListBooks :many
-SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
-FROM books
+SELECT id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at FROM books
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
@@ -344,15 +649,15 @@ func (q *Queries) ListBooks(ctx context.Context, arg ListBooksParams) ([]Book, e
 			&i.ID,
 			&i.Title,
 			&i.Subtitle,
-			&i.Author,
-			&i.Publisher,
+			&i.AuthorID,
+			&i.PublisherID,
 			&i.PublishedDate,
 			&i.Isbn10,
 			&i.Isbn13,
 			&i.Pages,
 			&i.Language,
 			&i.Description,
-			&i.SeriesName,
+			&i.SeriesID,
 			&i.SeriesPosition,
 			&i.Genres,
 			&i.Tags,
@@ -370,85 +675,24 @@ func (q *Queries) ListBooks(ctx context.Context, arg ListBooksParams) ([]Book, e
 	return items, nil
 }
 
-const listSeries = `-- name: ListSeries :many
-SELECT 
-  DISTINCT series_name as name,
-  COUNT(*) as book_count
-FROM books
-WHERE series_name IS NOT NULL
-GROUP BY series_name
-ORDER BY series_name
-`
-
-type ListSeriesRow struct {
-	Name      *string
-	BookCount int64
-}
-
-func (q *Queries) ListSeries(ctx context.Context) ([]ListSeriesRow, error) {
-	rows, err := q.db.Query(ctx, listSeries)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListSeriesRow
-	for rows.Next() {
-		var i ListSeriesRow
-		if err := rows.Scan(&i.Name, &i.BookCount); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const searchAuthors = `-- name: SearchAuthors :many
-SELECT DISTINCT author
-FROM books
-WHERE author ILIKE '%' || $1 || '%'
-ORDER BY author
-`
-
-func (q *Queries) SearchAuthors(ctx context.Context, dollar_1 *string) ([]string, error) {
-	rows, err := q.db.Query(ctx, searchAuthors, dollar_1)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var author string
-		if err := rows.Scan(&author); err != nil {
-			return nil, err
-		}
-		items = append(items, author)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const searchBooks = `-- name: SearchBooks :many
-SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
-FROM books
-WHERE 
-  ($1::text IS NULL OR title ILIKE '%' || $1 || '%')
-  AND ($2::text IS NULL OR author ILIKE '%' || $2 || '%')
-  AND ($3::text IS NULL OR publisher ILIKE '%' || $3 || '%')
-  AND ($4::text IS NULL OR series_name ILIKE '%' || $4 || '%')
-ORDER BY 
-  CASE 
-    WHEN $5 = 'title' THEN title
-    WHEN $5 = 'author' THEN author
-    WHEN $5 = 'published_date' THEN published_date::text
-    WHEN $5 = 'created_at' THEN created_at::text
-  END,
-  created_at DESC
-LIMIT $6 OFFSET $7
+SELECT b.id, b.title, b.subtitle, b.author_id, b.publisher_id, b.published_date, b.isbn10, b.isbn13, b.pages, b.language, b.description, b.series_id, b.series_position, b.genres, b.tags, b.image_url, b.created_at, b.updated_at FROM books b
+LEFT JOIN authors a ON b.author_id = a.id
+LEFT JOIN publishers p ON b.publisher_id = p.id
+LEFT JOIN series s ON b.series_id = s.id
+WHERE
+  ($1::text = '' OR b.title ILIKE '%' || $1 || '%')
+  AND ($2::text = '' OR b.author_id::text = $2)
+  AND ($3::text = '' OR b.publisher_id::text = $3)
+  AND ($4::text = '' OR b.series_id::text = $4)
+  AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%')
+ORDER BY
+  CASE
+    WHEN $6 = 'title' THEN b.title
+    WHEN $6 = 'published_date' THEN b.published_date::text
+    ELSE b.created_at::text
+  END DESC
+LIMIT $7 OFFSET $8
 `
 
 type SearchBooksParams struct {
@@ -456,7 +700,8 @@ type SearchBooksParams struct {
 	Column2 string
 	Column3 string
 	Column4 string
-	Column5 interface{}
+	Column5 string
+	Column6 interface{}
 	Limit   int32
 	Offset  int32
 }
@@ -468,6 +713,7 @@ func (q *Queries) SearchBooks(ctx context.Context, arg SearchBooksParams) ([]Boo
 		arg.Column3,
 		arg.Column4,
 		arg.Column5,
+		arg.Column6,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -482,15 +728,15 @@ func (q *Queries) SearchBooks(ctx context.Context, arg SearchBooksParams) ([]Boo
 			&i.ID,
 			&i.Title,
 			&i.Subtitle,
-			&i.Author,
-			&i.Publisher,
+			&i.AuthorID,
+			&i.PublisherID,
 			&i.PublishedDate,
 			&i.Isbn10,
 			&i.Isbn13,
 			&i.Pages,
 			&i.Language,
 			&i.Description,
-			&i.SeriesName,
+			&i.SeriesID,
 			&i.SeriesPosition,
 			&i.Genres,
 			&i.Tags,
@@ -508,49 +754,75 @@ func (q *Queries) SearchBooks(ctx context.Context, arg SearchBooksParams) ([]Boo
 	return items, nil
 }
 
-const updateBook = `-- name: UpdateBook :exec
+const updateBook = `-- name: UpdateBook :one
 UPDATE books
-SET title = $1, subtitle = $2, author = $3, publisher = $4, published_date = $5, isbn10 = $6, isbn13 = $7, pages = $8, language = $9, description = $10, series_name = $11, series_position = $12, genres = $13, tags = $14, image_url = $15
-WHERE id = $16
+SET
+  title = $2, subtitle = $3, author_id = $4, publisher_id = $5,
+  published_date = $6, isbn10 = $7, isbn13 = $8, pages = $9,
+  language = $10, description = $11, series_id = $12, series_position = $13,
+  genres = $14, tags = $15, image_url = $16, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13, pages, language, description, series_id, series_position, genres, tags, image_url, created_at, updated_at
 `
 
 type UpdateBookParams struct {
+	ID             uuid.UUID
 	Title          string
 	Subtitle       *string
-	Author         string
-	Publisher      *string
+	AuthorID       uuid.UUID
+	PublisherID    pgtype.UUID
 	PublishedDate  *time.Time
 	Isbn10         *string
 	Isbn13         *string
 	Pages          *int32
 	Language       *string
 	Description    *string
-	SeriesName     *string
+	SeriesID       pgtype.UUID
 	SeriesPosition *int32
 	Genres         *string
 	Tags           *string
 	ImageUrl       *string
-	ID             uuid.UUID
 }
 
-func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) error {
-	_, err := q.db.Exec(ctx, updateBook,
+func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) (Book, error) {
+	row := q.db.QueryRow(ctx, updateBook,
+		arg.ID,
 		arg.Title,
 		arg.Subtitle,
-		arg.Author,
-		arg.Publisher,
+		arg.AuthorID,
+		arg.PublisherID,
 		arg.PublishedDate,
 		arg.Isbn10,
 		arg.Isbn13,
 		arg.Pages,
 		arg.Language,
 		arg.Description,
-		arg.SeriesName,
+		arg.SeriesID,
 		arg.SeriesPosition,
 		arg.Genres,
 		arg.Tags,
 		arg.ImageUrl,
-		arg.ID,
 	)
-	return err
+	var i Book
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Subtitle,
+		&i.AuthorID,
+		&i.PublisherID,
+		&i.PublishedDate,
+		&i.Isbn10,
+		&i.Isbn13,
+		&i.Pages,
+		&i.Language,
+		&i.Description,
+		&i.SeriesID,
+		&i.SeriesPosition,
+		&i.Genres,
+		&i.Tags,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

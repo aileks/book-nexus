@@ -1,10 +1,25 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
+# Book Nexus GraphQL Schema
 
 type Author {
+  id: ID!
   name: String!
+  slug: String
+  bio: String
   books: [Book!]!
+  bookCount: Int!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Publisher {
+  id: ID!
+  name: String!
+  slug: String
+  website: String
+  books: [Book!]!
+  bookCount: Int!
+  createdAt: String!
+  updatedAt: String!
 }
 
 type Series {
@@ -14,6 +29,8 @@ type Series {
   description: String
   books: [Book!]!
   bookCount: Int!
+  createdAt: String!
+  updatedAt: String!
 }
 
 type Book {
@@ -21,14 +38,14 @@ type Book {
   title: String!
   subtitle: String
   author: Author!
-  publisher: String
+  publisher: Publisher
   publishedDate: String
   isbn10: String
   isbn13: String
   pages: Int
   language: String
   description: String
-  seriesName: String
+  series: Series
   seriesPosition: Int
   genres: String
   tags: String
@@ -40,11 +57,10 @@ type Book {
 
 input SearchBooksInput {
   query: String
-  author: String
-  publisher: String
-  series: String
-  genres: String
-  tags: String
+  authorId: ID
+  publisherId: ID
+  seriesId: ID
+  authorName: String
   sortBy: String
   limit: Int = 20
   offset: Int = 0
@@ -56,26 +72,39 @@ type SearchResult {
 }
 
 type Query {
-  books: [Book!]!
+  # Books
+  books(limit: Int, offset: Int): [Book!]!
   book(id: ID!): Book
-  authors(search: String): [Author!]!
   searchBooks(input: SearchBooksInput!): SearchResult!
+
+  # Authors
+  author(id: ID!): Author
+  authorBySlug(slug: String!): Author
+  authors(search: String, limit: Int, offset: Int): [Author!]!
+
+  # Publishers
+  publisher(id: ID!): Publisher
+  publisherBySlug(slug: String!): Publisher
+  publishers(search: String, limit: Int, offset: Int): [Publisher!]!
+
+  # Series
   series(id: ID!): Series
-  seriesList: [Series!]!
+  seriesBySlug(slug: String!): Series
+  seriesList(search: String, limit: Int, offset: Int): [Series!]!
 }
 
 input NewBook {
   title: String!
   subtitle: String
-  author: String!
-  publisher: String
+  authorId: ID!
+  publisherId: ID
   publishedDate: String
   isbn10: String
   isbn13: String
   pages: Int
   language: String
   description: String
-  seriesName: String
+  seriesId: ID
   seriesPosition: Int
   genres: String
   tags: String

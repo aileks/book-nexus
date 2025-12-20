@@ -135,7 +135,7 @@ func MigrateStatus(pool *pgxpool.Pool) error {
 }
 
 // SeedBooks reads the CSV file and inserts book data into the database.
-// It skips rows that already exist (based on ISBN13 if present, or title+author combination).
+// It uses the normalized schema with separate authors, publishers, and series tables.
 func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 	file, err := os.Open(csvPath)
 	if err != nil {
@@ -161,19 +161,14 @@ func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 
 	ctx := context.Background()
 
-	// Use a batch for inserting multiple rows
-	batch := &pgx.Batch{}
-
-	stmt := `INSERT INTO books (
-		title, subtitle, author, publisher, published_date, isbn10, isbn13,
-		pages, language, description, series_name, series_position, genres, tags, image_url
-	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-	ON CONFLICT (isbn13) DO NOTHING`
+	// Cache for entity IDs to avoid repeated lookups
+	authorCache := make(map[string]string)    // name -> id
+	publisherCache := make(map[string]string) // name -> id
+	seriesCache := make(map[string]string)    // name -> id
 
 	var inserted, skipped int
-	batchSize := 100
 
-	// Process rows
+	// Process rows one at a time (we need to resolve foreign keys)
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -192,8 +187,8 @@ func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 		// Extract values
 		title := strings.TrimSpace(row[colMap["title"]])
 		subtitle := strings.TrimSpace(row[colMap["subtitle"]])
-		author := strings.TrimSpace(row[colMap["author"]])
-		publisher := strings.TrimSpace(row[colMap["publisher"]])
+		authorName := strings.TrimSpace(row[colMap["author"]])
+		publisherName := strings.TrimSpace(row[colMap["publisher"]])
 		publishedDateStr := strings.TrimSpace(row[colMap["publishedDate"]])
 		isbn10 := strings.TrimSpace(row[colMap["isbn10"]])
 		isbn13 := strings.TrimSpace(row[colMap["isbn13"]])
@@ -207,9 +202,57 @@ func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 		imageURL := strings.TrimSpace(row[colMap["image_url"]])
 
 		// Validate required fields
-		if title == "" || author == "" {
+		if title == "" || authorName == "" {
 			skipped++
 			continue
+		}
+
+		// Get or create author
+		authorID, ok := authorCache[authorName]
+		if !ok {
+			authorID, err = getOrCreateAuthor(ctx, pool, authorName)
+			if err != nil {
+				log.Printf("Error getting/creating author %s: %v", authorName, err)
+				skipped++
+				continue
+			}
+			authorCache[authorName] = authorID
+		}
+
+		// Get or create publisher (if present)
+		var publisherID *string
+		if publisherName != "" {
+			pid, ok := publisherCache[publisherName]
+			if !ok {
+				pid, err = getOrCreatePublisher(ctx, pool, publisherName)
+				if err != nil {
+					log.Printf("Error getting/creating publisher %s: %v", publisherName, err)
+					// Continue without publisher
+				} else {
+					publisherCache[publisherName] = pid
+					publisherID = &pid
+				}
+			} else {
+				publisherID = &pid
+			}
+		}
+
+		// Get or create series (if present)
+		var seriesID *string
+		if seriesName != "" {
+			sid, ok := seriesCache[seriesName]
+			if !ok {
+				sid, err = getOrCreateSeries(ctx, pool, seriesName)
+				if err != nil {
+					log.Printf("Error getting/creating series %s: %v", seriesName, err)
+					// Continue without series
+				} else {
+					seriesCache[seriesName] = sid
+					seriesID = &sid
+				}
+			} else {
+				seriesID = &sid
+			}
 		}
 
 		// Parse published_date
@@ -238,86 +281,157 @@ func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 		}
 
 		// Convert empty strings to NULL
-		var subtitlePtr *string
+		var subtitlePtr, isbn10Ptr, isbn13Ptr, languagePtr, descriptionPtr, genresPtr, tagsPtr, imageURLPtr *string
 		if subtitle != "" {
 			subtitlePtr = &subtitle
 		}
-		var publisherPtr *string
-		if publisher != "" {
-			publisherPtr = &publisher
-		}
-		var isbn10Ptr *string
 		if isbn10 != "" {
 			isbn10Ptr = &isbn10
 		}
-		var isbn13Ptr *string
 		if isbn13 != "" {
 			isbn13Ptr = &isbn13
 		}
-		var languagePtr *string
 		if language != "" {
 			languagePtr = &language
 		}
-		var descriptionPtr *string
 		if description != "" {
 			descriptionPtr = &description
 		}
-		var seriesNamePtr *string
-		if seriesName != "" {
-			seriesNamePtr = &seriesName
-		}
-		var genresPtr *string
 		if genres != "" {
 			genresPtr = &genres
 		}
-		var tagsPtr *string
 		if tags != "" {
 			tagsPtr = &tags
 		}
-		var imageURLPtr *string
 		if imageURL != "" {
 			imageURLPtr = &imageURL
 		}
 
-		// Queue insert in batch
-		batch.Queue(stmt,
-			title, subtitlePtr, author, publisherPtr, publishedDate,
+		// Insert book with foreign keys
+		_, err = pool.Exec(ctx, `
+			INSERT INTO books (
+				title, subtitle, author_id, publisher_id, published_date, isbn10, isbn13,
+				pages, language, description, series_id, series_position, genres, tags, image_url
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+			ON CONFLICT (isbn13) DO NOTHING`,
+			title, subtitlePtr, authorID, publisherID, publishedDate,
 			isbn10Ptr, isbn13Ptr, pages, languagePtr, descriptionPtr,
-			seriesNamePtr, seriesPosition, genresPtr, tagsPtr, imageURLPtr,
+			seriesID, seriesPosition, genresPtr, tagsPtr, imageURLPtr,
 		)
-
-		// Execute batch when it reaches batchSize
-		if batch.Len() >= batchSize {
-			results := pool.SendBatch(ctx, batch)
-			for i := 0; i < batch.Len(); i++ {
-				_, err := results.Exec()
-				if err != nil {
-					log.Printf("Error executing batch insert: %v", err)
-					skipped++
-				} else {
-					inserted++
-				}
-			}
-			results.Close()
-			batch = &pgx.Batch{}
+		if err != nil {
+			log.Printf("Error inserting book %s: %v", title, err)
+			skipped++
+		} else {
+			inserted++
 		}
-	}
-
-	// Execute remaining batch items
-	if batch.Len() > 0 {
-		results := pool.SendBatch(ctx, batch)
-		for i := 0; i < batch.Len(); i++ {
-			_, err := results.Exec()
-			if err != nil {
-				log.Printf("Error executing batch insert: %v", err)
-				skipped++
-			} else {
-				inserted++
-			}
-		}
-		results.Close()
 	}
 
 	log.Printf("Seeding completed: %d books inserted, %d skipped", inserted, skipped)
+	log.Printf("Created %d authors, %d publishers, %d series", len(authorCache), len(publisherCache), len(seriesCache))
 	return nil
+}
+
+// getOrCreateAuthor finds an existing author by name or creates a new one.
+func getOrCreateAuthor(ctx context.Context, pool *pgxpool.Pool, name string) (string, error) {
+	var id string
+	err := pool.QueryRow(ctx, "SELECT id FROM authors WHERE name = $1", name).Scan(&id)
+	if err == nil {
+		return id, nil
+	}
+	if err != pgx.ErrNoRows {
+		return "", err
+	}
+
+	// Create new author
+	slug := slugify(name)
+	err = pool.QueryRow(ctx,
+		"INSERT INTO authors (name, slug) VALUES ($1, $2) RETURNING id",
+		name, slug,
+	).Scan(&id)
+	if err != nil {
+		// Handle race condition - try to select again
+		if strings.Contains(err.Error(), "duplicate key") {
+			err = pool.QueryRow(ctx, "SELECT id FROM authors WHERE name = $1", name).Scan(&id)
+			return id, err
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+// getOrCreatePublisher finds an existing publisher by name or creates a new one.
+func getOrCreatePublisher(ctx context.Context, pool *pgxpool.Pool, name string) (string, error) {
+	var id string
+	err := pool.QueryRow(ctx, "SELECT id FROM publishers WHERE name = $1", name).Scan(&id)
+	if err == nil {
+		return id, nil
+	}
+	if err != pgx.ErrNoRows {
+		return "", err
+	}
+
+	// Create new publisher
+	slug := slugify(name)
+	err = pool.QueryRow(ctx,
+		"INSERT INTO publishers (name, slug) VALUES ($1, $2) RETURNING id",
+		name, slug,
+	).Scan(&id)
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key") {
+			err = pool.QueryRow(ctx, "SELECT id FROM publishers WHERE name = $1", name).Scan(&id)
+			return id, err
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+// getOrCreateSeries finds an existing series by name or creates a new one.
+func getOrCreateSeries(ctx context.Context, pool *pgxpool.Pool, name string) (string, error) {
+	var id string
+	err := pool.QueryRow(ctx, "SELECT id FROM series WHERE name = $1", name).Scan(&id)
+	if err == nil {
+		return id, nil
+	}
+	if err != pgx.ErrNoRows {
+		return "", err
+	}
+
+	// Create new series
+	slug := slugify(name)
+	err = pool.QueryRow(ctx,
+		"INSERT INTO series (name, slug) VALUES ($1, $2) RETURNING id",
+		name, slug,
+	).Scan(&id)
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key") {
+			err = pool.QueryRow(ctx, "SELECT id FROM series WHERE name = $1", name).Scan(&id)
+			return id, err
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+// slugify converts a name to a URL-friendly slug.
+func slugify(name string) string {
+	// Convert to lowercase
+	slug := strings.ToLower(name)
+	// Replace spaces and special characters with hyphens
+	slug = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		if r == ' ' || r == '-' || r == '_' {
+			return '-'
+		}
+		return -1
+	}, slug)
+	// Remove multiple consecutive hyphens
+	for strings.Contains(slug, "--") {
+		slug = strings.ReplaceAll(slug, "--", "-")
+	}
+	// Trim leading/trailing hyphens
+	slug = strings.Trim(slug, "-")
+	return slug
 }

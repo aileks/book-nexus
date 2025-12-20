@@ -7,27 +7,57 @@ package graph
 
 import (
 	"book-nexus/graph/model"
+	"book-nexus/internal/authors"
+	"book-nexus/internal/books"
 	"book-nexus/internal/database/sqlc"
+	"book-nexus/internal/publishers"
+	"book-nexus/internal/recommendations"
+	"book-nexus/internal/series"
 	"context"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// ID is the resolver for the id field.
+func (r *authorResolver) ID(ctx context.Context, obj *sqlc.Author) (string, error) {
+	return obj.ID.String(), nil
+}
+
 // Books is the resolver for the books field.
-func (r *authorResolver) Books(ctx context.Context, obj *model.Author) ([]*sqlc.Book, error) {
-	q := sqlc.New(r.DB.DB())
-	books, err := q.GetBooksByAuthor(ctx, obj.Name)
+func (r *authorResolver) Books(ctx context.Context, obj *sqlc.Author) ([]*sqlc.Book, error) {
+	svc := books.NewService(r.DB.DB())
+	bookList, err := svc.GetBooksByAuthor(ctx, obj.ID)
 	if err != nil {
 		return nil, err
 	}
 	var result []*sqlc.Book
-	for _, b := range books {
-		b := b
-		result = append(result, &b)
+	for i := range bookList {
+		result = append(result, &bookList[i])
 	}
 	return result, nil
+}
+
+// BookCount is the resolver for the bookCount field.
+func (r *authorResolver) BookCount(ctx context.Context, obj *sqlc.Author) (int32, error) {
+	svc := authors.NewService(r.DB.DB())
+	count, err := svc.GetAuthorBookCount(ctx, obj.ID)
+	if err != nil {
+		return 0, err
+	}
+	return int32(count), nil
+}
+
+// CreatedAt is the resolver for the createdAt field.
+func (r *authorResolver) CreatedAt(ctx context.Context, obj *sqlc.Author) (string, error) {
+	return obj.CreatedAt.Format(time.RFC3339), nil
+}
+
+// UpdatedAt is the resolver for the updatedAt field.
+func (r *authorResolver) UpdatedAt(ctx context.Context, obj *sqlc.Author) (string, error) {
+	return obj.UpdatedAt.Format(time.RFC3339), nil
 }
 
 // ID is the resolver for the id field.
@@ -36,8 +66,18 @@ func (r *bookResolver) ID(ctx context.Context, obj *sqlc.Book) (string, error) {
 }
 
 // Author is the resolver for the author field.
-func (r *bookResolver) Author(ctx context.Context, obj *sqlc.Book) (*model.Author, error) {
-	return &model.Author{Name: obj.Author}, nil
+func (r *bookResolver) Author(ctx context.Context, obj *sqlc.Book) (*sqlc.Author, error) {
+	svc := authors.NewService(r.DB.DB())
+	return svc.GetAuthor(ctx, obj.AuthorID)
+}
+
+// Publisher is the resolver for the publisher field.
+func (r *bookResolver) Publisher(ctx context.Context, obj *sqlc.Book) (*sqlc.Publisher, error) {
+	if !obj.PublisherID.Valid {
+		return nil, nil
+	}
+	svc := publishers.NewService(r.DB.DB())
+	return svc.GetPublisher(ctx, obj.PublisherID.Bytes)
 }
 
 // PublishedDate is the resolver for the publishedDate field.
@@ -47,6 +87,15 @@ func (r *bookResolver) PublishedDate(ctx context.Context, obj *sqlc.Book) (*stri
 	}
 	s := obj.PublishedDate.Format("2006-01-02")
 	return &s, nil
+}
+
+// Series is the resolver for the series field.
+func (r *bookResolver) Series(ctx context.Context, obj *sqlc.Book) (*sqlc.Series, error) {
+	if !obj.SeriesID.Valid {
+		return nil, nil
+	}
+	svc := series.NewService(r.DB.DB())
+	return svc.GetSeries(ctx, obj.SeriesID.Bytes)
 }
 
 // CreatedAt is the resolver for the createdAt field.
@@ -61,12 +110,42 @@ func (r *bookResolver) UpdatedAt(ctx context.Context, obj *sqlc.Book) (string, e
 
 // Recommendations is the resolver for the recommendations field.
 func (r *bookResolver) Recommendations(ctx context.Context, obj *sqlc.Book) ([]*sqlc.Book, error) {
-	panic(fmt.Errorf("not implemented: Recommendations - recommendations"))
+	svc := recommendations.NewService(r.DB.DB())
+	bookList, err := svc.GetRecommendations(ctx, obj.ID, 5)
+	if err != nil {
+		return nil, err
+	}
+	var result []*sqlc.Book
+	for i := range bookList {
+		result = append(result, &bookList[i])
+	}
+	return result, nil
 }
 
 // CreateBook is the resolver for the createBook field.
 func (r *mutationResolver) CreateBook(ctx context.Context, input model.NewBook) (*sqlc.Book, error) {
-	q := sqlc.New(r.DB.DB())
+	authorID, err := uuid.Parse(input.AuthorID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid author ID: %v", err)
+	}
+
+	var publisherID pgtype.UUID
+	if input.PublisherID != nil {
+		pid, err := uuid.Parse(*input.PublisherID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid publisher ID: %v", err)
+		}
+		publisherID = pgtype.UUID{Bytes: pid, Valid: true}
+	}
+
+	var seriesID pgtype.UUID
+	if input.SeriesID != nil {
+		sid, err := uuid.Parse(*input.SeriesID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid series ID: %v", err)
+		}
+		seriesID = pgtype.UUID{Bytes: sid, Valid: true}
+	}
 
 	var publishedDate *time.Time
 	if input.PublishedDate != nil {
@@ -77,223 +156,346 @@ func (r *mutationResolver) CreateBook(ctx context.Context, input model.NewBook) 
 		publishedDate = &t
 	}
 
-	arg := sqlc.CreateBookParams{
-		Title:         input.Title,
-		Subtitle:      input.Subtitle,
-		Author:        input.Author,
-		Publisher:     input.Publisher,
-		PublishedDate: publishedDate,
-		Isbn10:        input.Isbn10,
-		Isbn13:        input.Isbn13,
-		Language:      input.Language,
-		Description:   input.Description,
-		SeriesName:    input.SeriesName,
-		Genres:        input.Genres,
-		Tags:          input.Tags,
-		ImageUrl:      input.ImageURL,
-	}
-
+	var pages *int32
 	if input.Pages != nil {
 		p := int32(*input.Pages)
-		arg.Pages = &p
-	}
-	if input.SeriesPosition != nil {
-		p := int32(*input.SeriesPosition)
-		arg.SeriesPosition = &p
+		pages = &p
 	}
 
-	book, err := q.CreateBook(ctx, arg)
+	var seriesPosition *int32
+	if input.SeriesPosition != nil {
+		p := int32(*input.SeriesPosition)
+		seriesPosition = &p
+	}
+
+	q := sqlc.New(r.DB.DB())
+	book, err := q.CreateBook(ctx, sqlc.CreateBookParams{
+		Title:          input.Title,
+		Subtitle:       input.Subtitle,
+		AuthorID:       authorID,
+		PublisherID:    publisherID,
+		PublishedDate:  publishedDate,
+		Isbn10:         input.Isbn10,
+		Isbn13:         input.Isbn13,
+		Pages:          pages,
+		Language:       input.Language,
+		Description:    input.Description,
+		SeriesID:       seriesID,
+		SeriesPosition: seriesPosition,
+		Genres:         input.Genres,
+		Tags:           input.Tags,
+		ImageUrl:       input.ImageURL,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return &book, nil
 }
 
+// ID is the resolver for the id field.
+func (r *publisherResolver) ID(ctx context.Context, obj *sqlc.Publisher) (string, error) {
+	return obj.ID.String(), nil
+}
+
 // Books is the resolver for the books field.
-func (r *queryResolver) Books(ctx context.Context) ([]*sqlc.Book, error) {
-	q := sqlc.New(r.DB.DB())
-	// Default limit/offset
-	books, err := q.ListBooks(ctx, sqlc.ListBooksParams{
-		Limit:  100,
-		Offset: 0,
-	})
+func (r *publisherResolver) Books(ctx context.Context, obj *sqlc.Publisher) ([]*sqlc.Book, error) {
+	svc := books.NewService(r.DB.DB())
+	bookList, err := svc.GetBooksByPublisher(ctx, obj.ID)
 	if err != nil {
 		return nil, err
 	}
 	var result []*sqlc.Book
-	for _, b := range books {
-		b := b
-		result = append(result, &b)
+	for i := range bookList {
+		result = append(result, &bookList[i])
+	}
+	return result, nil
+}
+
+// BookCount is the resolver for the bookCount field.
+func (r *publisherResolver) BookCount(ctx context.Context, obj *sqlc.Publisher) (int32, error) {
+	svc := publishers.NewService(r.DB.DB())
+	count, err := svc.GetPublisherBookCount(ctx, obj.ID)
+	if err != nil {
+		return 0, err
+	}
+	return int32(count), nil
+}
+
+// CreatedAt is the resolver for the createdAt field.
+func (r *publisherResolver) CreatedAt(ctx context.Context, obj *sqlc.Publisher) (string, error) {
+	return obj.CreatedAt.Format(time.RFC3339), nil
+}
+
+// UpdatedAt is the resolver for the updatedAt field.
+func (r *publisherResolver) UpdatedAt(ctx context.Context, obj *sqlc.Publisher) (string, error) {
+	return obj.UpdatedAt.Format(time.RFC3339), nil
+}
+
+// Books is the resolver for the books field.
+func (r *queryResolver) Books(ctx context.Context, limit *int32, offset *int32) ([]*sqlc.Book, error) {
+	svc := books.NewService(r.DB.DB())
+	l := int32(100)
+	o := int32(0)
+	if limit != nil {
+		l = *limit
+	}
+	if offset != nil {
+		o = *offset
+	}
+	bookList, err := svc.ListBooks(ctx, l, o)
+	if err != nil {
+		return nil, err
+	}
+	var result []*sqlc.Book
+	for i := range bookList {
+		result = append(result, &bookList[i])
 	}
 	return result, nil
 }
 
 // Book is the resolver for the book field.
 func (r *queryResolver) Book(ctx context.Context, id string) (*sqlc.Book, error) {
-	q := sqlc.New(r.DB.DB())
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid UUID: %v", err)
 	}
-	book, err := q.GetBookByID(ctx, uid)
-	if err != nil {
-		return nil, err
-	}
-	return &book, nil
-}
-
-// Authors is the resolver for the authors field.
-func (r *queryResolver) Authors(ctx context.Context, search *string) ([]*model.Author, error) {
-	q := sqlc.New(r.DB.DB())
-	var authors []string
-	var err error
-	if search != nil {
-		authors, err = q.SearchAuthors(ctx, search)
-	} else {
-		authors, err = q.ListAuthors(ctx)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*model.Author
-	for _, a := range authors {
-		result = append(result, &model.Author{Name: a})
-	}
-	return result, nil
+	svc := books.NewService(r.DB.DB())
+	return svc.GetBook(ctx, uid)
 }
 
 // SearchBooks is the resolver for the searchBooks field.
 func (r *queryResolver) SearchBooks(ctx context.Context, input model.SearchBooksInput) (*model.SearchResult, error) {
-	q := sqlc.New(r.DB.DB())
+	svc := books.NewService(r.DB.DB())
 
-	// Convert pointer fields to string values (nil becomes empty string)
-	var title string
+	var query, authorID, publisherID, seriesID, authorName, sortBy string
 	if input.Query != nil {
-		title = *input.Query
+		query = *input.Query
 	}
-	var author string
-	if input.Author != nil {
-		author = *input.Author
+	if input.AuthorID != nil {
+		authorID = *input.AuthorID
 	}
-	var publisher string
-	if input.Publisher != nil {
-		publisher = *input.Publisher
+	if input.PublisherID != nil {
+		publisherID = *input.PublisherID
 	}
-	var series string
-	if input.Series != nil {
-		series = *input.Series
+	if input.SeriesID != nil {
+		seriesID = *input.SeriesID
 	}
-
-	// Default values for pagination and sorting
-	sortBy := "created_at"
+	if input.AuthorName != nil {
+		authorName = *input.AuthorName
+	}
 	if input.SortBy != nil {
 		sortBy = *input.SortBy
 	}
+
 	limit := int32(20)
+	offset := int32(0)
 	if input.Limit != nil {
 		limit = *input.Limit
 	}
-	offset := int32(0)
 	if input.Offset != nil {
 		offset = *input.Offset
 	}
 
-	// Search books
-	books, err := q.SearchBooks(ctx, sqlc.SearchBooksParams{
-		Column1: title,
-		Column2: author,
-		Column3: publisher,
-		Column4: series,
-		Column5: sortBy,
-		Limit:   limit,
-		Offset:  offset,
+	result, err := svc.SearchBooks(ctx, books.SearchInput{
+		Query:       query,
+		AuthorID:    authorID,
+		PublisherID: publisherID,
+		SeriesID:    seriesID,
+		AuthorName:  authorName,
+		SortBy:      sortBy,
+		Limit:       limit,
+		Offset:      offset,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("search books: %v", err)
 	}
 
-	// Get total count
-	count, err := q.CountSearchResults(ctx, sqlc.CountSearchResultsParams{
-		Column1: title,
-		Column2: author,
-		Column3: publisher,
-		Column4: series,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("count results: %v", err)
-	}
-
-	// Convert books to pointers
 	var bookPtrs []*sqlc.Book
-	for i := range books {
-		bookPtrs = append(bookPtrs, &books[i])
+	for i := range result.Books {
+		bookPtrs = append(bookPtrs, &result.Books[i])
 	}
 
 	return &model.SearchResult{
 		Books: bookPtrs,
-		Total: int32(count),
+		Total: int32(result.Total),
 	}, nil
+}
+
+// Author is the resolver for the author field.
+func (r *queryResolver) Author(ctx context.Context, id string) (*sqlc.Author, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %v", err)
+	}
+	svc := authors.NewService(r.DB.DB())
+	return svc.GetAuthor(ctx, uid)
+}
+
+// AuthorBySlug is the resolver for the authorBySlug field.
+func (r *queryResolver) AuthorBySlug(ctx context.Context, slug string) (*sqlc.Author, error) {
+	svc := authors.NewService(r.DB.DB())
+	return svc.GetAuthorBySlug(ctx, slug)
+}
+
+// Authors is the resolver for the authors field.
+func (r *queryResolver) Authors(ctx context.Context, search *string, limit *int32, offset *int32) ([]*sqlc.Author, error) {
+	svc := authors.NewService(r.DB.DB())
+	l := int32(100)
+	o := int32(0)
+	if limit != nil {
+		l = *limit
+	}
+	if offset != nil {
+		o = *offset
+	}
+
+	var authorList []sqlc.Author
+	var err error
+	if search != nil && *search != "" {
+		authorList, err = svc.SearchAuthors(ctx, *search, l, o)
+	} else {
+		authorList, err = svc.ListAuthors(ctx, l, o)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*sqlc.Author
+	for i := range authorList {
+		result = append(result, &authorList[i])
+	}
+	return result, nil
+}
+
+// Publisher is the resolver for the publisher field.
+func (r *queryResolver) Publisher(ctx context.Context, id string) (*sqlc.Publisher, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %v", err)
+	}
+	svc := publishers.NewService(r.DB.DB())
+	return svc.GetPublisher(ctx, uid)
+}
+
+// PublisherBySlug is the resolver for the publisherBySlug field.
+func (r *queryResolver) PublisherBySlug(ctx context.Context, slug string) (*sqlc.Publisher, error) {
+	svc := publishers.NewService(r.DB.DB())
+	return svc.GetPublisherBySlug(ctx, slug)
+}
+
+// Publishers is the resolver for the publishers field.
+func (r *queryResolver) Publishers(ctx context.Context, search *string, limit *int32, offset *int32) ([]*sqlc.Publisher, error) {
+	svc := publishers.NewService(r.DB.DB())
+	l := int32(100)
+	o := int32(0)
+	if limit != nil {
+		l = *limit
+	}
+	if offset != nil {
+		o = *offset
+	}
+
+	var publisherList []sqlc.Publisher
+	var err error
+	if search != nil && *search != "" {
+		publisherList, err = svc.SearchPublishers(ctx, *search, l, o)
+	} else {
+		publisherList, err = svc.ListPublishers(ctx, l, o)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*sqlc.Publisher
+	for i := range publisherList {
+		result = append(result, &publisherList[i])
+	}
+	return result, nil
 }
 
 // Series is the resolver for the series field.
-func (r *queryResolver) Series(ctx context.Context, id string) (*model.Series, error) {
-	q := sqlc.New(r.DB.DB())
-
-	// Get series details - id parameter is the series name
-	seriesName := id
-	series, err := q.GetSeriesByName(ctx, &seriesName)
+func (r *queryResolver) Series(ctx context.Context, id string) (*sqlc.Series, error) {
+	uid, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("get series: %v", err)
+		return nil, fmt.Errorf("invalid UUID: %v", err)
 	}
+	svc := series.NewService(r.DB.DB())
+	return svc.GetSeries(ctx, uid)
+}
 
-	// Handle case where series doesn't exist
-	if series.Name == nil {
-		return nil, nil
-	}
-
-	// Get books in series
-	books, err := q.GetBooksBySeries(ctx, series.Name)
-	if err != nil {
-		return nil, fmt.Errorf("get series books: %v", err)
-	}
-
-	// Convert books to pointers
-	var bookPtrs []*sqlc.Book
-	for i := range books {
-		bookPtrs = append(bookPtrs, &books[i])
-	}
-
-	return &model.Series{
-		ID:        *series.Name,
-		Name:      *series.Name,
-		Books:     bookPtrs,
-		BookCount: int32(series.BookCount),
-	}, nil
+// SeriesBySlug is the resolver for the seriesBySlug field.
+func (r *queryResolver) SeriesBySlug(ctx context.Context, slug string) (*sqlc.Series, error) {
+	svc := series.NewService(r.DB.DB())
+	return svc.GetSeriesBySlug(ctx, slug)
 }
 
 // SeriesList is the resolver for the seriesList field.
-func (r *queryResolver) SeriesList(ctx context.Context) ([]*model.Series, error) {
-	q := sqlc.New(r.DB.DB())
+func (r *queryResolver) SeriesList(ctx context.Context, search *string, limit *int32, offset *int32) ([]*sqlc.Series, error) {
+	svc := series.NewService(r.DB.DB())
+	l := int32(100)
+	o := int32(0)
+	if limit != nil {
+		l = *limit
+	}
+	if offset != nil {
+		o = *offset
+	}
 
-	seriesList, err := q.ListSeries(ctx)
+	var seriesList []sqlc.Series
+	var err error
+	if search != nil && *search != "" {
+		seriesList, err = svc.SearchSeries(ctx, *search, l, o)
+	} else {
+		seriesList, err = svc.ListSeries(ctx, l, o)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("list series: %v", err)
+		return nil, err
 	}
 
-	var result []*model.Series
-	for _, s := range seriesList {
-		if s.Name == nil {
-			continue
-		}
-		result = append(result, &model.Series{
-			ID:        *s.Name,
-			Name:      *s.Name,
-			BookCount: int32(s.BookCount),
-		})
+	var result []*sqlc.Series
+	for i := range seriesList {
+		result = append(result, &seriesList[i])
 	}
-
 	return result, nil
+}
+
+// ID is the resolver for the id field.
+func (r *seriesResolver) ID(ctx context.Context, obj *sqlc.Series) (string, error) {
+	return obj.ID.String(), nil
+}
+
+// Books is the resolver for the books field.
+func (r *seriesResolver) Books(ctx context.Context, obj *sqlc.Series) ([]*sqlc.Book, error) {
+	svc := books.NewService(r.DB.DB())
+	bookList, err := svc.GetBooksBySeries(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	var result []*sqlc.Book
+	for i := range bookList {
+		result = append(result, &bookList[i])
+	}
+	return result, nil
+}
+
+// BookCount is the resolver for the bookCount field.
+func (r *seriesResolver) BookCount(ctx context.Context, obj *sqlc.Series) (int32, error) {
+	svc := series.NewService(r.DB.DB())
+	count, err := svc.GetSeriesBookCount(ctx, obj.ID)
+	if err != nil {
+		return 0, err
+	}
+	return int32(count), nil
+}
+
+// CreatedAt is the resolver for the createdAt field.
+func (r *seriesResolver) CreatedAt(ctx context.Context, obj *sqlc.Series) (string, error) {
+	return obj.CreatedAt.Format(time.RFC3339), nil
+}
+
+// UpdatedAt is the resolver for the updatedAt field.
+func (r *seriesResolver) UpdatedAt(ctx context.Context, obj *sqlc.Series) (string, error) {
+	return obj.UpdatedAt.Format(time.RFC3339), nil
 }
 
 // Author returns AuthorResolver implementation.
@@ -305,10 +507,18 @@ func (r *Resolver) Book() BookResolver { return &bookResolver{r} }
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// Publisher returns PublisherResolver implementation.
+func (r *Resolver) Publisher() PublisherResolver { return &publisherResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+// Series returns SeriesResolver implementation.
+func (r *Resolver) Series() SeriesResolver { return &seriesResolver{r} }
 
 type authorResolver struct{ *Resolver }
 type bookResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type publisherResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type seriesResolver struct{ *Resolver }
