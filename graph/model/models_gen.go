@@ -9,6 +9,12 @@ import (
 type Mutation struct {
 }
 
+type NewAuthor struct {
+	Name string  `json:"name"`
+	Slug *string `json:"slug,omitempty"`
+	Bio  *string `json:"bio,omitempty"`
+}
+
 type NewBook struct {
 	Title          string  `json:"title"`
 	Subtitle       *string `json:"subtitle,omitempty"`
@@ -25,6 +31,12 @@ type NewBook struct {
 	Genres         *string `json:"genres,omitempty"`
 	Tags           *string `json:"tags,omitempty"`
 	ImageURL       *string `json:"imageUrl,omitempty"`
+}
+
+type NewSeries struct {
+	Name        string  `json:"name"`
+	Slug        *string `json:"slug,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 type Query struct {
@@ -45,4 +57,34 @@ type SearchBooksInput struct {
 type SearchResult struct {
 	Books []*sqlc.Book `json:"books"`
 	Total int32        `json:"total"`
+}
+
+type UpdateAuthor struct {
+	Name string  `json:"name"`
+	Slug *string `json:"slug,omitempty"`
+	Bio  *string `json:"bio,omitempty"`
+}
+
+type UpdateBook struct {
+	Title          string  `json:"title"`
+	Subtitle       *string `json:"subtitle,omitempty"`
+	AuthorID       string  `json:"authorId"`
+	PublisherID    *string `json:"publisherId,omitempty"`
+	PublishedDate  *string `json:"publishedDate,omitempty"`
+	Isbn10         *string `json:"isbn10,omitempty"`
+	Isbn13         *string `json:"isbn13,omitempty"`
+	Pages          *int32  `json:"pages,omitempty"`
+	Language       *string `json:"language,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	SeriesID       *string `json:"seriesId,omitempty"`
+	SeriesPosition *int32  `json:"seriesPosition,omitempty"`
+	Genres         *string `json:"genres,omitempty"`
+	Tags           *string `json:"tags,omitempty"`
+	ImageURL       *string `json:"imageUrl,omitempty"`
+}
+
+type UpdateSeries struct {
+	Name        string  `json:"name"`
+	Slug        *string `json:"slug,omitempty"`
+	Description *string `json:"description,omitempty"`
 }

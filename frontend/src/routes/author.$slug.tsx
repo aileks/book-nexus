@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuthorBySlug } from "@/lib/graphql/queries";
 import { BackToSearch } from "@/components/BackToSearch";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { getErrorMessage, ApiError } from "@/lib/graphql/client";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   IconUser,
   IconBook,
@@ -9,12 +12,16 @@ import {
 } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/author/$slug")({
-  component: AuthorPage,
+  component: () => (
+    <ErrorBoundary>
+      <AuthorPage />
+    </ErrorBoundary>
+  ),
 });
 
 function AuthorPage() {
   const { slug } = Route.useParams();
-  const { data: author, isLoading, error } = useAuthorBySlug(slug);
+  const { data: author, isLoading, error, refetch } = useAuthorBySlug(slug);
 
   if (isLoading) {
     return (
@@ -24,7 +31,30 @@ function AuthorPage() {
     );
   }
 
-  if (error || !author) {
+  if (error) {
+    const isNotFound = error instanceof ApiError && error.isNotFound;
+    return (
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-10">
+          <BackToSearch />
+          <Card className="p-16 text-center">
+            <IconUser className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
+            <h3 className="text-2xl font-semibold mb-3">
+              {isNotFound ? "Author not found" : "Error loading author"}
+            </h3>
+            <p className="text-muted-foreground text-lg mb-4">
+              {getErrorMessage(error)}
+            </p>
+            {!isNotFound && (
+              <Button onClick={() => refetch()}>Try Again</Button>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!author) {
     return (
       <div className="min-h-screen">
         <div className="container mx-auto px-4 py-10">
@@ -33,7 +63,7 @@ function AuthorPage() {
             <IconUser className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
             <h3 className="text-2xl font-semibold mb-3">Author not found</h3>
             <p className="text-muted-foreground text-lg">
-              {error ? (error as Error).message : "The requested author could not be found."}
+              The requested author could not be found.
             </p>
           </Card>
         </div>

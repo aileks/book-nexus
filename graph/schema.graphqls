@@ -112,6 +112,61 @@ input NewBook {
   imageUrl: String
 }
 
+input NewAuthor {
+  name: String!
+  slug: String
+  bio: String
+}
+
+input UpdateAuthor {
+  name: String!
+  slug: String
+  bio: String
+}
+
+input NewSeries {
+  name: String!
+  slug: String
+  description: String
+}
+
+input UpdateSeries {
+  name: String!
+  slug: String
+  description: String
+}
+
+input UpdateBook {
+  title: String!
+  subtitle: String
+  authorId: ID!
+  publisherId: ID
+  publishedDate: String
+  isbn10: String
+  isbn13: String
+  pages: Int
+  language: String
+  description: String
+  seriesId: ID
+  seriesPosition: Int
+  genres: String
+  tags: String
+  imageUrl: String
+}
+
 type Mutation {
+  # Books (admin only)
   createBook(input: NewBook!): Book!
+  updateBook(id: ID!, input: UpdateBook!): Book!
+  deleteBook(id: ID!): Boolean!
+
+  # Authors (admin only)
+  createAuthor(input: NewAuthor!): Author!
+  updateAuthor(id: ID!, input: UpdateAuthor!): Author!
+  deleteAuthor(id: ID!): Boolean!
+
+  # Series (admin only)
+  createSeries(input: NewSeries!): Series!
+  updateSeries(id: ID!, input: UpdateSeries!): Series!
+  deleteSeries(id: ID!): Boolean!
 }

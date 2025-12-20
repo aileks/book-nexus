@@ -23,6 +23,9 @@ func (s *Server) setupRoutes() http.Handler {
 		DB: s.db,
 	}}))
 
+	// Wrap with admin auth context
+	graphQLHandler := s.withAdminAuth(srv)
+
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
@@ -35,7 +38,7 @@ func (s *Server) setupRoutes() http.Handler {
 	})
 
 	// Main GraphQL endpoint
-	mux.Handle("/query", s.withLogging(srv))
+	mux.Handle("/query", s.withLogging(graphQLHandler))
 
 	// Health check endpoint for load balancers
 	mux.HandleFunc("/health", s.healthCheck)
@@ -75,6 +78,15 @@ func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) withAdminAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract admin password from header
+		adminPassword := r.Header.Get("X-Admin-Password")
+		ctx := graph.WithAdminAuth(r.Context(), adminPassword)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 func (s *Server) withLogging(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -108,7 +120,7 @@ func (s *Server) withCORS(handler http.Handler) http.Handler {
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Admin-Password")
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {

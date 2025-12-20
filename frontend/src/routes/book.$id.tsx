@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useBook } from "@/lib/graphql/queries";
 import { BackToSearch } from "@/components/BackToSearch";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LoadingError } from "@/components/ErrorDisplay";
+import { getErrorMessage, ApiError } from "@/lib/graphql/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   IconBook,
@@ -16,12 +20,16 @@ import {
 } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/book/$id")({
-  component: BookDetailPage,
+  component: () => (
+    <ErrorBoundary>
+      <BookDetailPage />
+    </ErrorBoundary>
+  ),
 });
 
 function BookDetailPage() {
   const { id } = Route.useParams();
-  const { data: book, isLoading, error } = useBook(id);
+  const { data: book, isLoading, error, refetch } = useBook(id);
 
   if (isLoading) {
     return (
@@ -31,7 +39,30 @@ function BookDetailPage() {
     );
   }
 
-  if (error || !book) {
+  if (error) {
+    const isNotFound = error instanceof ApiError && error.isNotFound;
+    return (
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-10">
+          <BackToSearch />
+          <Card className="p-16 text-center">
+            <IconBook className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
+            <h3 className="text-2xl font-semibold mb-3">
+              {isNotFound ? "Book not found" : "Error loading book"}
+            </h3>
+            <p className="text-muted-foreground text-lg mb-4">
+              {getErrorMessage(error)}
+            </p>
+            {!isNotFound && (
+              <Button onClick={() => refetch()}>Try Again</Button>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!book) {
     return (
       <div className="min-h-screen">
         <div className="container mx-auto px-4 py-10">
@@ -40,7 +71,7 @@ function BookDetailPage() {
             <IconBook className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
             <h3 className="text-2xl font-semibold mb-3">Book not found</h3>
             <p className="text-muted-foreground text-lg">
-              {error ? (error as Error).message : "The requested book could not be found."}
+              The requested book could not be found.
             </p>
           </Card>
         </div>

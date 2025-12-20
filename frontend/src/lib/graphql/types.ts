@@ -100,3 +100,24 @@ export type NewBook = {
   tags?: InputMaybe<string>;
   imageUrl?: InputMaybe<string>;
 };
+
+// Update book input for mutations
+export type UpdateBook = NewBook;
+
+// Author input types
+export type NewAuthor = {
+  name: string;
+  slug?: InputMaybe<string>;
+  bio?: InputMaybe<string>;
+};
+
+export type UpdateAuthor = NewAuthor;
+
+// Series input types
+export type NewSeries = {
+  name: string;
+  slug?: InputMaybe<string>;
+  description?: InputMaybe<string>;
+};
+
+export type UpdateSeries = NewSeries;

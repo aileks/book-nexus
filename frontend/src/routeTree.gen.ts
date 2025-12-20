@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SeriesSlugRouteImport } from './routes/series.$slug'
 import { Route as BookIdRouteImport } from './routes/book.$id'
@@ -18,6 +19,11 @@ import { Route as AuthorSlugRouteImport } from './routes/author.$slug'
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,6 +49,7 @@ const AuthorSlugRoute = AuthorSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/search': typeof SearchRoute
   '/author/$slug': typeof AuthorSlugRoute
   '/book/$id': typeof BookIdRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/search': typeof SearchRoute
   '/author/$slug': typeof AuthorSlugRoute
   '/book/$id': typeof BookIdRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/search': typeof SearchRoute
   '/author/$slug': typeof AuthorSlugRoute
   '/book/$id': typeof BookIdRoute
@@ -65,12 +74,25 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/search' | '/author/$slug' | '/book/$id' | '/series/$slug'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/search'
+    | '/author/$slug'
+    | '/book/$id'
+    | '/series/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/author/$slug' | '/book/$id' | '/series/$slug'
+  to:
+    | '/'
+    | '/admin'
+    | '/search'
+    | '/author/$slug'
+    | '/book/$id'
+    | '/series/$slug'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/search'
     | '/author/$slug'
     | '/book/$id'
@@ -79,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   SearchRoute: typeof SearchRoute
   AuthorSlugRoute: typeof AuthorSlugRoute
   BookIdRoute: typeof BookIdRoute
@@ -92,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -127,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   SearchRoute: SearchRoute,
   AuthorSlugRoute: AuthorSlugRoute,
   BookIdRoute: BookIdRoute,

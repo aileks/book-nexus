@@ -124,6 +124,10 @@ func (r *bookResolver) Recommendations(ctx context.Context, obj *sqlc.Book) ([]*
 
 // CreateBook is the resolver for the createBook field.
 func (r *mutationResolver) CreateBook(ctx context.Context, input model.NewBook) (*sqlc.Book, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
 	authorID, err := uuid.Parse(input.AuthorID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid author ID: %v", err)
@@ -190,6 +194,224 @@ func (r *mutationResolver) CreateBook(ctx context.Context, input model.NewBook) 
 		return nil, err
 	}
 	return &book, nil
+}
+
+// UpdateBook is the resolver for the updateBook field.
+func (r *mutationResolver) UpdateBook(ctx context.Context, id string, input model.UpdateBook) (*sqlc.Book, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	bookID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid book ID: %v", err)
+	}
+
+	authorID, err := uuid.Parse(input.AuthorID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid author ID: %v", err)
+	}
+
+	var publisherID pgtype.UUID
+	if input.PublisherID != nil {
+		pid, err := uuid.Parse(*input.PublisherID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid publisher ID: %v", err)
+		}
+		publisherID = pgtype.UUID{Bytes: pid, Valid: true}
+	}
+
+	var seriesID pgtype.UUID
+	if input.SeriesID != nil {
+		sid, err := uuid.Parse(*input.SeriesID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid series ID: %v", err)
+		}
+		seriesID = pgtype.UUID{Bytes: sid, Valid: true}
+	}
+
+	var publishedDate *time.Time
+	if input.PublishedDate != nil {
+		t, err := time.Parse("2006-01-02", *input.PublishedDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format: %v", err)
+		}
+		publishedDate = &t
+	}
+
+	var pages *int32
+	if input.Pages != nil {
+		p := int32(*input.Pages)
+		pages = &p
+	}
+
+	var seriesPosition *int32
+	if input.SeriesPosition != nil {
+		p := int32(*input.SeriesPosition)
+		seriesPosition = &p
+	}
+
+	q := sqlc.New(r.DB.DB())
+	book, err := q.UpdateBook(ctx, sqlc.UpdateBookParams{
+		ID:             bookID,
+		Title:          input.Title,
+		Subtitle:       input.Subtitle,
+		AuthorID:       authorID,
+		PublisherID:    publisherID,
+		PublishedDate:  publishedDate,
+		Isbn10:         input.Isbn10,
+		Isbn13:         input.Isbn13,
+		Pages:          pages,
+		Language:       input.Language,
+		Description:    input.Description,
+		SeriesID:       seriesID,
+		SeriesPosition: seriesPosition,
+		Genres:         input.Genres,
+		Tags:           input.Tags,
+		ImageUrl:       input.ImageURL,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &book, nil
+}
+
+// DeleteBook is the resolver for the deleteBook field.
+func (r *mutationResolver) DeleteBook(ctx context.Context, id string) (bool, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return false, err
+	}
+
+	bookID, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid book ID: %v", err)
+	}
+
+	q := sqlc.New(r.DB.DB())
+	if err := q.DeleteBook(ctx, bookID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CreateAuthor is the resolver for the createAuthor field.
+func (r *mutationResolver) CreateAuthor(ctx context.Context, input model.NewAuthor) (*sqlc.Author, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	q := sqlc.New(r.DB.DB())
+	author, err := q.CreateAuthor(ctx, sqlc.CreateAuthorParams{
+		Name: input.Name,
+		Slug: input.Slug,
+		Bio:  input.Bio,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &author, nil
+}
+
+// UpdateAuthor is the resolver for the updateAuthor field.
+func (r *mutationResolver) UpdateAuthor(ctx context.Context, id string, input model.UpdateAuthor) (*sqlc.Author, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	authorID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid author ID: %v", err)
+	}
+
+	q := sqlc.New(r.DB.DB())
+	author, err := q.UpdateAuthor(ctx, sqlc.UpdateAuthorParams{
+		ID:   authorID,
+		Name: input.Name,
+		Slug: input.Slug,
+		Bio:  input.Bio,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &author, nil
+}
+
+// DeleteAuthor is the resolver for the deleteAuthor field.
+func (r *mutationResolver) DeleteAuthor(ctx context.Context, id string) (bool, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return false, err
+	}
+
+	authorID, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid author ID: %v", err)
+	}
+
+	q := sqlc.New(r.DB.DB())
+	if err := q.DeleteAuthor(ctx, authorID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CreateSeries is the resolver for the createSeries field.
+func (r *mutationResolver) CreateSeries(ctx context.Context, input model.NewSeries) (*sqlc.Series, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	q := sqlc.New(r.DB.DB())
+	series, err := q.CreateSeries(ctx, sqlc.CreateSeriesParams{
+		Name:        input.Name,
+		Slug:        input.Slug,
+		Description: input.Description,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &series, nil
+}
+
+// UpdateSeries is the resolver for the updateSeries field.
+func (r *mutationResolver) UpdateSeries(ctx context.Context, id string, input model.UpdateSeries) (*sqlc.Series, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	seriesID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid series ID: %v", err)
+	}
+
+	q := sqlc.New(r.DB.DB())
+	series, err := q.UpdateSeries(ctx, sqlc.UpdateSeriesParams{
+		ID:          seriesID,
+		Name:        input.Name,
+		Slug:        input.Slug,
+		Description: input.Description,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &series, nil
+}
+
+// DeleteSeries is the resolver for the deleteSeries field.
+func (r *mutationResolver) DeleteSeries(ctx context.Context, id string) (bool, error) {
+	if err := RequireAdmin(ctx); err != nil {
+		return false, err
+	}
+
+	seriesID, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid series ID: %v", err)
+	}
+
+	q := sqlc.New(r.DB.DB())
+	if err := q.DeleteSeries(ctx, seriesID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // ID is the resolver for the id field.
