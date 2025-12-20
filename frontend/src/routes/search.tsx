@@ -21,15 +21,20 @@ function SearchResultsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState(q);
 
+  console.log('SearchResultsPage rendered with q:', q);
+  
   const { data, isLoading, error } = useSearchBooks({
     query: q || undefined,
     limit: 20,
   });
 
+  console.log('useSearchBooks result:', { data, isLoading, error });
+
   const books = data?.books || [];
   const total = data?.total || 0;
 
   const handleSearch = (searchQuery: string) => {
+    console.log('handleSearch called with:', searchQuery);
     if (searchQuery.trim()) {
       window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
     } else {
