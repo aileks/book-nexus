@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSeriesBySlug } from "@/lib/graphql/queries";
+import { BackToSearch } from "@/components/BackToSearch";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   IconStack2,
   IconBook,
-  IconArrowLeft,
   IconUser,
 } from "@tabler/icons-react";
 
@@ -27,12 +26,9 @@ function SeriesPage() {
 
   if (error || !series) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <div className="container mx-auto px-4 py-10">
-          <Link to="/search" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
-            <IconArrowLeft className="w-5 h-5" />
-            <span className="text-lg">Back to search</span>
-          </Link>
+          <BackToSearch />
           <Card className="p-16 text-center">
             <IconStack2 className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
             <h3 className="text-2xl font-semibold mb-3">Series not found</h3>
@@ -51,12 +47,9 @@ function SeriesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-10">
-        <Link to="/search" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
-          <IconArrowLeft className="w-5 h-5" />
-          <span className="text-lg">Back to search</span>
-        </Link>
+        <BackToSearch />
 
         {/* Series Header */}
         <div className="mb-10">

@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useBook } from "@/lib/graphql/queries";
+import { BackToSearch } from "@/components/BackToSearch";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import {
   IconBook,
   IconUser,
@@ -12,7 +12,6 @@ import {
   IconCalendar,
   IconLanguage,
   IconFileText,
-  IconArrowLeft,
   IconExternalLink,
 } from "@tabler/icons-react";
 
@@ -34,12 +33,9 @@ function BookDetailPage() {
 
   if (error || !book) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <div className="container mx-auto px-4 py-10">
-          <Link to="/search" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
-            <IconArrowLeft className="w-5 h-5" />
-            <span className="text-lg">Back to search</span>
-          </Link>
+          <BackToSearch />
           <Card className="p-16 text-center">
             <IconBook className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
             <h3 className="text-2xl font-semibold mb-3">Book not found</h3>
@@ -53,12 +49,9 @@ function BookDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-10">
-        <Link to="/search" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8">
-          <IconArrowLeft className="w-5 h-5" />
-          <span className="text-lg">Back to search</span>
-        </Link>
+        <BackToSearch />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Book Cover */}
