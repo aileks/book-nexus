@@ -3,7 +3,6 @@ node_modules/
 dist/
 *.md
 !README.md
-!PRD.md
 .env
 .settings/
 .vscode/

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"book-nexus/internal/database/sqlc"
@@ -26,25 +27,47 @@ type service struct {
 	queries *sqlc.Queries
 }
 
-var (
-	database   = os.Getenv("DATABASE_NAME")
-	password   = os.Getenv("DATABASE_PASSWORD")
-	username   = os.Getenv("DATABASE_USERNAME")
-	port       = os.Getenv("DATABASE_PORT")
-	host       = os.Getenv("DATABASE_HOST")
-	schema     = os.Getenv("DATABASE_SCHEMA")
-	dbInstance *service
-)
+var dbInstance *service
+
+func getConnectionString() string {
+	// Check if DATABASE_URL is provided for Railway
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		// Add search_path if not already present
+		if schema := os.Getenv("DATABASE_SCHEMA"); schema != "" {
+			if !strings.Contains(dbURL, "search_path=") {
+				separator := "?"
+				if strings.Contains(dbURL, "?") {
+					separator = "&"
+				}
+				dbURL = fmt.Sprintf("%s%ssearch_path=%s", dbURL, separator, schema)
+			}
+		}
+		return dbURL
+	}
+
+	// Fallback to individual variables (local development)
+	database := os.Getenv("DATABASE_NAME")
+	password := os.Getenv("DATABASE_PASSWORD")
+	username := os.Getenv("DATABASE_USERNAME")
+	port := os.Getenv("DATABASE_PORT")
+	host := os.Getenv("DATABASE_HOST")
+	schema := os.Getenv("DATABASE_SCHEMA")
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
+		username, password, host, port, database, schema)
+}
 
 func New() Service {
 	if dbInstance != nil {
 		return dbInstance
 	}
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", username, password, host, port, database, schema)
+
+	connStr := getConnectionString()
 	db, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	dbInstance = &service{
 		db:      db,
 		queries: sqlc.New(db),
@@ -78,7 +101,7 @@ func (s *service) Health() map[string]string {
 }
 
 func (s *service) Close() error {
-	log.Printf("Disconnected from database: %s", database)
+	log.Printf("Disconnected from database: %s", os.Getenv("DATABASE_NAME"))
 	s.db.Close()
 	return nil
 }
