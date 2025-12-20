@@ -167,7 +167,7 @@ export function BooksTab() {
       <div className="w-full max-w-md">
         <SearchBar
           onSearch={handleSearch}
-          placeholder="Search books by title, author..."
+          placeholder="Search books by title, author, genre, or tag..."
           debounceMs={300}
         />
       </div>

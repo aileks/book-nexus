@@ -20,7 +20,12 @@ import { ITEMS_PER_PAGE } from "./constants";
 
 export function AuthorsTab() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: authors, isLoading, error, refetch } = useAdminAuthors(searchQuery);
+  const {
+    data: authors,
+    isLoading,
+    error,
+    refetch,
+  } = useAdminAuthors(searchQuery);
   const createAuthor = useCreateAuthor();
   const updateAuthor = useUpdateAuthor();
   const deleteAuthor = useDeleteAuthor();
@@ -129,7 +134,10 @@ export function AuthorsTab() {
     return (
       <Card className="p-6">
         <InlineError
-          message={getErrorMessage(error) || "Error loading authors. Check your admin password."}
+          message={
+            getErrorMessage(error) ||
+            "Error loading authors. Check your admin password."
+          }
           onRetry={() => refetch()}
         />
       </Card>

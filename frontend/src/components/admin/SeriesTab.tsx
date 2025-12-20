@@ -20,7 +20,12 @@ import { ITEMS_PER_PAGE } from "./constants";
 
 export function SeriesTab() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: seriesList, isLoading, error, refetch } = useAdminSeries(searchQuery);
+  const {
+    data: seriesList,
+    isLoading,
+    error,
+    refetch,
+  } = useAdminSeries(searchQuery);
   const createSeries = useCreateSeries();
   const updateSeries = useUpdateSeries();
   const deleteSeries = useDeleteSeries();
@@ -129,7 +134,10 @@ export function SeriesTab() {
     return (
       <Card className="p-6">
         <InlineError
-          message={getErrorMessage(error) || "Error loading series. Check your admin password."}
+          message={
+            getErrorMessage(error) ||
+            "Error loading series. Check your admin password."
+          }
           onRetry={() => refetch()}
         />
       </Card>

@@ -22,10 +22,7 @@ export function ErrorDisplay({
       <div className="flex gap-2">
         {onRetry && <Button onClick={onRetry}>Try Again</Button>}
         {showHomeLink && (
-          <Link
-            to="/"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
+          <Link to="/" className={cn(buttonVariants({ variant: "outline" }))}>
             Go Home
           </Link>
         )}
@@ -42,10 +39,7 @@ export function NotFoundError() {
       <p className="text-muted-foreground mb-6">
         The page you're looking for doesn't exist or has been moved.
       </p>
-      <Link
-        to="/"
-        className={cn(buttonVariants())}
-      >
+      <Link to="/" className={cn(buttonVariants())}>
         Go Home
       </Link>
     </div>

@@ -1,8 +1,9 @@
 # Book Nexus
 
-![Book Nexus Showcase](./docs/showcase.png)
-
 Book Nexus is a modern book discovery engine providing a single GraphQL entrypoint for all book data. While the initial launch focuses on horror and related genres, the goal is to be inclusive of all genres to serve a multitude of needs.
+
+![Book Nexus Home](./docs/showcase.png)
+![Book Nexus Search](./docs/showcase2.png)
 
 ## Features
 

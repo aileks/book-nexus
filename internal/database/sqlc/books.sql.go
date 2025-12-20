@@ -28,7 +28,7 @@ const countSearchResults = `-- name: CountSearchResults :one
 SELECT COUNT(*) FROM books b
 LEFT JOIN authors a ON b.author_id = a.id
 WHERE
-  ($1::text = '' OR b.title ILIKE '%' || $1 || '%')
+  ($1::text = '' OR (b.title ILIKE '%' || $1 || '%' OR a.name ILIKE '%' || $1 || '%' OR b.genres ILIKE '%' || $1 || '%' OR b.tags ILIKE '%' || $1 || '%'))
   AND ($2::text = '' OR b.author_id::text = $2)
   AND ($3::text = '' OR b.publisher_id::text = $3)
   AND ($4::text = '' OR b.series_id::text = $4)
@@ -684,7 +684,7 @@ LEFT JOIN authors a ON b.author_id = a.id
 LEFT JOIN publishers p ON b.publisher_id = p.id
 LEFT JOIN series s ON b.series_id = s.id
 WHERE
-  ($1::text = '' OR b.title ILIKE '%' || $1 || '%')
+  ($1::text = '' OR (b.title ILIKE '%' || $1 || '%' OR a.name ILIKE '%' || $1 || '%' OR b.genres ILIKE '%' || $1 || '%' OR b.tags ILIKE '%' || $1 || '%'))
   AND ($2::text = '' OR b.author_id::text = $2)
   AND ($3::text = '' OR b.publisher_id::text = $3)
   AND ($4::text = '' OR b.series_id::text = $4)
