@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"book-nexus/internal/database/sqlc"
@@ -30,22 +29,13 @@ type service struct {
 var dbInstance *service
 
 func getConnectionString() string {
-	// Check if DATABASE_URL is provided for Railway
+	// If DATABASE_URL exists (Railway/Heroku), use it AS-IS
 	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		// Add search_path if not already present
-		if schema := os.Getenv("DATABASE_SCHEMA"); schema != "" {
-			if !strings.Contains(dbURL, "search_path=") {
-				separator := "?"
-				if strings.Contains(dbURL, "?") {
-					separator = "&"
-				}
-				dbURL = fmt.Sprintf("%s%ssearch_path=%s", dbURL, separator, schema)
-			}
-		}
+		log.Printf("Using DATABASE_URL from environment")
 		return dbURL
 	}
 
-	// Fallback to individual variables (local development)
+	// Otherwise, build from individual variables (local dev)
 	database := os.Getenv("DATABASE_NAME")
 	password := os.Getenv("DATABASE_PASSWORD")
 	username := os.Getenv("DATABASE_USERNAME")
@@ -53,6 +43,7 @@ func getConnectionString() string {
 	host := os.Getenv("DATABASE_HOST")
 	schema := os.Getenv("DATABASE_SCHEMA")
 
+	log.Printf("Using individual DB variables for connection")
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
 		username, password, host, port, database, schema)
 }
