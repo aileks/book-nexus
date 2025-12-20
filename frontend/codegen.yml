@@ -1,0 +1,18 @@
+schema: "../graph/*.graphqls"
+documents: "src/lib/graphql/queries.ts"
+generates:
+  src/lib/graphql/types.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+    config:
+      scalars:
+        ID: string
+        String: string
+        Int: number
+        Boolean: boolean
+        Float: number
+      skipTypename: true
+  ./graphql.schema.json:
+    plugins:
+      - urql-introspection
