@@ -1,7 +1,7 @@
-import { createClient, cacheExchange, fetchExchange } from 'urql';
+import { createClient, cacheExchange, fetchExchange } from "urql";
 
 const client = createClient({
-  url: '/query',
+  url: "/query",
   exchanges: [cacheExchange, fetchExchange],
 });
 

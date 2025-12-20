@@ -1,16 +1,25 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import type { Book } from "@/lib/graphql/types"
-import { IconBook, IconUser } from "@tabler/icons-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import type { Book } from "@/lib/graphql/types";
+import { IconBook, IconUser } from "@tabler/icons-react";
 
 interface BookCardProps {
-  book: Book
-  onClick?: () => void
+  book: Book;
+  onClick?: () => void;
 }
 
 export function BookCard({ book, onClick }: BookCardProps) {
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer" onClick={onClick}>
+    <Card
+      className="h-full hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
       {book.imageUrl ? (
         <img
           src={book.imageUrl}
@@ -25,7 +34,9 @@ export function BookCard({ book, onClick }: BookCardProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg line-clamp-2">{book.title}</CardTitle>
         {book.subtitle && (
-          <CardDescription className="line-clamp-1">{book.subtitle}</CardDescription>
+          <CardDescription className="line-clamp-1">
+            {book.subtitle}
+          </CardDescription>
         )}
       </CardHeader>
       <CardContent className="space-y-2">
@@ -33,34 +44,42 @@ export function BookCard({ book, onClick }: BookCardProps) {
           <IconUser className="w-4 h-4" />
           <span className="line-clamp-1">{book.author.name}</span>
         </div>
-        
+
         {book.publisher && (
-          <p className="text-sm text-muted-foreground line-clamp-1">{book.publisher}</p>
+          <p className="text-sm text-muted-foreground line-clamp-1">
+            {book.publisher}
+          </p>
         )}
-        
+
         {book.seriesName && (
           <div className="pt-2">
-            <SeriesBadge seriesName={book.seriesName} position={book.seriesPosition} />
+            <SeriesBadge
+              seriesName={book.seriesName}
+              position={book.seriesPosition}
+            />
           </div>
         )}
-        
+
         {book.tags && (
           <div className="flex flex-wrap gap-1 pt-2">
-            {book.tags.split(",").slice(0, 3).map(tag => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag.trim()}
-              </Badge>
-            ))}
+            {book.tags
+              .split(",")
+              .slice(0, 3)
+              .map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag.trim()}
+                </Badge>
+              ))}
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 interface SeriesBadgeProps {
-  seriesName: string
-  position?: number | null
+  seriesName: string;
+  position?: number | null;
 }
 
 function SeriesBadge({ seriesName, position }: SeriesBadgeProps) {
@@ -68,5 +87,5 @@ function SeriesBadge({ seriesName, position }: SeriesBadgeProps) {
     <Badge variant="outline" className="text-xs">
       {position ? `${seriesName} #${position}` : seriesName}
     </Badge>
-  )
+  );
 }
