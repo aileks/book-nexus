@@ -1,8 +1,8 @@
-import { createClient, dedupExchange, cacheExchange, fetchExchange } from 'urql';
+import { createClient, cacheExchange, fetchExchange } from 'urql';
 
 const client = createClient({
   url: '/query',
-  exchanges: [dedupExchange, cacheExchange, fetchExchange],
+  exchanges: [cacheExchange, fetchExchange],
 });
 
 export { client };
