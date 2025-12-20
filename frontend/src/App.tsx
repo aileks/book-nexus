@@ -1,7 +1,7 @@
-import { ComponentExample } from "@/components/component-example";
+import { SearchPage } from "@/pages/SearchPage"
 
 export function App() {
-  return <ComponentExample />;
+  return <SearchPage />
 }
 
-export default App;
+export default App
