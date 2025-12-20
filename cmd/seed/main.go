@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var csvPath string
-	flag.StringVar(&csvPath, "csv", "data/book_results.csv", "Path to the CSV file to seed from")
+	flag.StringVar(&csvPath, "csv", "data/books.csv", "Path to the CSV file to seed from")
 	flag.Parse()
 
 	// Initialize database
