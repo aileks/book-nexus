@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useBook } from "@/lib/graphql/queries";
 import { BackToSearch } from "@/components/BackToSearch";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LoadingError } from "@/components/ErrorDisplay";
 import { getErrorMessage, ApiError } from "@/lib/graphql/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
