@@ -1,7 +1,7 @@
-import { SearchPage } from "@/pages/SearchPage"
+import { Outlet } from "@tanstack/react-router";
 
 export function App() {
-  return <SearchPage />
+  return <Outlet />;
 }
 
-export default App
+export default App;

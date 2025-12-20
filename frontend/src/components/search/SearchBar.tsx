@@ -1,28 +1,36 @@
-import { useState, useEffect } from "react"
-import { Input } from "@/components/ui/input"
-import { IconSearch, IconX } from "@tabler/icons-react"
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { IconSearch, IconX } from "@tabler/icons-react";
 
 interface SearchBarProps {
-  onSearch: (query: string) => void
-  placeholder?: string
-  debounceMs?: number
+  onSearch: (query: string) => void;
+  placeholder?: string;
+  debounceMs?: number;
+  defaultValue?: string;
+  autoFocus?: boolean;
 }
 
-export function SearchBar({ onSearch, placeholder = "Search books...", debounceMs = 300 }: SearchBarProps) {
-  const [query, setQuery] = useState("")
+export function SearchBar({
+  onSearch,
+  placeholder = "Search books...",
+  debounceMs = 300,
+  defaultValue = "",
+  autoFocus = false,
+}: SearchBarProps) {
+  const [query, setQuery] = useState(defaultValue);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onSearch(query)
-    }, debounceMs)
+      onSearch(query);
+    }, debounceMs);
 
-    return () => clearTimeout(timer)
-  }, [query, debounceMs, onSearch])
+    return () => clearTimeout(timer);
+  }, [query, debounceMs, onSearch]);
 
   const clearSearch = () => {
-    setQuery("")
-    onSearch("")
-  }
+    setQuery("");
+    onSearch("");
+  };
 
   return (
     <div className="relative w-full max-w-2xl">
@@ -34,6 +42,7 @@ export function SearchBar({ onSearch, placeholder = "Search books...", debounceM
         placeholder={placeholder}
         className="pl-10 pr-10 py-6 text-lg"
         aria-label="Search books"
+        autoFocus={autoFocus}
       />
       {query && (
         <button
@@ -46,5 +55,5 @@ export function SearchBar({ onSearch, placeholder = "Search books...", debounceM
         </button>
       )}
     </div>
-  )
+  );
 }
