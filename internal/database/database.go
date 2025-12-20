@@ -28,35 +28,24 @@ type service struct {
 
 var dbInstance *service
 
-func getConnectionString() string {
-	// If DATABASE_URL exists (Railway/Heroku), use it AS-IS
-	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		log.Printf("Using DATABASE_URL from environment")
-		return dbURL
-	}
-
-	// Otherwise, build from individual variables (local dev)
-	database := os.Getenv("DATABASE_NAME")
-	password := os.Getenv("DATABASE_PASSWORD")
-	username := os.Getenv("DATABASE_USERNAME")
-	port := os.Getenv("DATABASE_PORT")
-	host := os.Getenv("DATABASE_HOST")
-	schema := os.Getenv("DATABASE_SCHEMA")
-
-	log.Printf("Using individual DB variables for connection")
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
-		username, password, host, port, database, schema)
-}
-
 func New() Service {
 	if dbInstance != nil {
 		return dbInstance
 	}
 
-	connStr := getConnectionString()
-	db, err := pgxpool.New(context.Background(), connStr)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("FATAL: DATABASE_URL is not set")
+	}
+
+	// Add search_path if provided
+	if schema := os.Getenv("DATABASE_SCHEMA"); schema != "" {
+		dbURL = fmt.Sprintf("%s&search_path=%s", dbURL, schema)
+	}
+
+	db, err := pgxpool.New(context.Background(), dbURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("FATAL: Failed to create connection pool: %v", err)
 	}
 
 	dbInstance = &service{
@@ -92,7 +81,7 @@ func (s *service) Health() map[string]string {
 }
 
 func (s *service) Close() error {
-	log.Printf("Disconnected from database: %s", os.Getenv("DATABASE_NAME"))
+	log.Printf("Disconnected from database")
 	s.db.Close()
 	return nil
 }
