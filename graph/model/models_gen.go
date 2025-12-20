@@ -36,6 +36,7 @@ type SearchBooksInput struct {
 	PublisherID *string `json:"publisherId,omitempty"`
 	SeriesID    *string `json:"seriesId,omitempty"`
 	AuthorName  *string `json:"authorName,omitempty"`
+	Genre       *string `json:"genre,omitempty"`
 	SortBy      *string `json:"sortBy,omitempty"`
 	Limit       *int32  `json:"limit,omitempty"`
 	Offset      *int32  `json:"offset,omitempty"`

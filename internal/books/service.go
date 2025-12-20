@@ -54,7 +54,8 @@ type SearchInput struct {
 	PublisherID string // UUID as string, empty for no filter
 	SeriesID    string // UUID as string, empty for no filter
 	AuthorName  string
-	SortBy      string
+	Genre       string
+	SortBy      string // Options: title_asc, title_desc, date_asc, date_desc, author
 	Limit       int32
 	Offset      int32
 }
@@ -65,18 +66,14 @@ type SearchResult struct {
 }
 
 func (s *Service) SearchBooks(ctx context.Context, input SearchInput) (*SearchResult, error) {
-	sortBy := input.SortBy
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-
 	books, err := s.queries.SearchBooks(ctx, sqlc.SearchBooksParams{
 		Column1: input.Query,
 		Column2: input.AuthorID,
 		Column3: input.PublisherID,
 		Column4: input.SeriesID,
 		Column5: input.AuthorName,
-		Column6: sortBy,
+		Column6: input.Genre,
+		Column7: input.SortBy,
 		Limit:   input.Limit,
 		Offset:  input.Offset,
 	})
@@ -90,6 +87,7 @@ func (s *Service) SearchBooks(ctx context.Context, input SearchInput) (*SearchRe
 		Column3: input.PublisherID,
 		Column4: input.SeriesID,
 		Column5: input.AuthorName,
+		Column6: input.Genre,
 	})
 	if err != nil {
 		return nil, err

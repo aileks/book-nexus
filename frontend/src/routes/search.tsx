@@ -5,11 +5,29 @@ import { Pagination } from "@/components/search/Pagination";
 import { useSearchBooks } from "@/lib/graphql/queries";
 import { saveLastSearch } from "@/lib/useLastSearch";
 import { Card } from "@/components/ui/card";
-import { IconBook, IconSearch } from "@tabler/icons-react";
-import type { Book } from "@/lib/graphql/types";
+import { Button } from "@/components/ui/button";
+import { IconBook, IconSearch, IconX } from "@tabler/icons-react";
+import type { Book, SortOption } from "@/lib/graphql/types";
 import { useState, useEffect } from "react";
 
 const ITEMS_PER_PAGE = 20;
+
+const GENRES = [
+  "Fantasy",
+  "Horror",
+  "Mystery",
+  "Suspense",
+  "Thriller",
+];
+
+const SORT_OPTIONS: { value: SortOption | ''; label: string }[] = [
+  { value: '', label: 'Relevance' },
+  { value: 'title_asc', label: 'Title (A-Z)' },
+  { value: 'title_desc', label: 'Title (Z-A)' },
+  { value: 'date_desc', label: 'Newest First' },
+  { value: 'date_asc', label: 'Oldest First' },
+  { value: 'author', label: 'Author' },
+];
 
 export const Route = createFileRoute("/search")({
   component: SearchResultsPage,
@@ -17,12 +35,14 @@ export const Route = createFileRoute("/search")({
     return {
       q: (search.q as string) || "",
       page: Number(search.page) || 1,
+      genre: (search.genre as string) || "",
+      sort: (search.sort as SortOption | '') || "",
     };
   },
 });
 
 function SearchResultsPage() {
-  const { q, page } = Route.useSearch();
+  const { q, page, genre, sort } = Route.useSearch();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState(q);
@@ -38,6 +58,8 @@ function SearchResultsPage() {
 
   const { data, isLoading, error } = useSearchBooks({
     query: q || undefined,
+    genre: genre || undefined,
+    sortBy: sort || undefined,
     limit: ITEMS_PER_PAGE,
     offset,
   });
@@ -48,16 +70,30 @@ function SearchResultsPage() {
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      navigate({ to: "/search", search: { q: query.trim(), page: 1 } });
+      navigate({ to: "/search", search: { q: query.trim(), page: 1, genre, sort } });
     } else {
       navigate({ to: "/" });
     }
   };
 
   const handlePageChange = (newPage: number) => {
-    navigate({ to: "/search", search: { q, page: newPage } });
+    navigate({ to: "/search", search: { q, page: newPage, genre, sort } });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleGenreChange = (newGenre: string) => {
+    navigate({ to: "/search", search: { q, page: 1, genre: newGenre, sort } });
+  };
+
+  const handleSortChange = (newSort: SortOption | '') => {
+    navigate({ to: "/search", search: { q, page: 1, genre, sort: newSort } });
+  };
+
+  const clearFilters = () => {
+    navigate({ to: "/search", search: { q, page: 1, genre: "", sort: "" } });
+  };
+
+  const hasActiveFilters = genre || sort;
 
   return (
     <div className="min-h-screen">
@@ -92,19 +128,64 @@ function SearchResultsPage() {
 
         {books.length > 0 && (
           <section>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="text-2xl font-semibold">
-                  {total} {total === 1 ? "book" : "books"} found
-                  {q && ` for "${q}"`}
-                </h3>
-                {totalPages > 1 && (
-                  <p className="text-muted-foreground mt-1">
-                    Page {page} of {totalPages}
-                  </p>
-                )}
+            <div className="flex flex-col gap-4 mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-semibold">
+                    {total} {total === 1 ? "book" : "books"} found
+                    {q && ` for "${q}"`}
+                    {genre && ` in ${genre}`}
+                  </h3>
+                  {totalPages > 1 && (
+                    <p className="text-muted-foreground mt-1">
+                      Page {page} of {totalPages}
+                    </p>
+                  )}
+                </div>
               </div>
-              <ViewToggle value={viewMode} onChange={setViewMode} />
+
+              {/* Filter and view controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Genre filter */}
+                  <select
+                    value={genre}
+                    onChange={(e) => handleGenreChange(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">All Genres</option>
+                    {GENRES.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+
+                  {/* Sort filter */}
+                  <select
+                    value={sort}
+                    onChange={(e) => handleSortChange(e.target.value as SortOption | '')}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+
+                  {/* Clear filters button */}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="h-9 text-muted-foreground hover:text-foreground"
+                    >
+                      <IconX className="w-4 h-4 mr-1" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+
+                <ViewToggle value={viewMode} onChange={setViewMode} />
+              </div>
             </div>
 
             {viewMode === "cards" ? (
@@ -129,15 +210,17 @@ function SearchResultsPage() {
           </section>
         )}
 
-        {!isLoading && !error && books.length === 0 && q && (
+        {!isLoading && !error && books.length === 0 && (q || genre) && (
           <Card className="p-16 text-center">
             <IconSearch className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
             <h3 className="text-2xl font-semibold mb-3">No books found</h3>
-            <p className="text-muted-foreground text-lg">Try a different search term</p>
+            <p className="text-muted-foreground text-lg">
+              Try a different search term{genre && " or genre"}
+            </p>
           </Card>
         )}
 
-        {!q && (
+        {!q && !genre && (
           <Card className="p-16 text-center">
             <IconBook className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
             <h3 className="text-2xl font-semibold mb-3">Start Searching</h3>

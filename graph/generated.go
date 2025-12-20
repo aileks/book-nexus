@@ -5066,7 +5066,7 @@ func (ec *executionContext) unmarshalInputSearchBooksInput(ctx context.Context, 
 		asMap["offset"] = 0
 	}
 
-	fieldsInOrder := [...]string{"query", "authorId", "publisherId", "seriesId", "authorName", "sortBy", "limit", "offset"}
+	fieldsInOrder := [...]string{"query", "authorId", "publisherId", "seriesId", "authorName", "genre", "sortBy", "limit", "offset"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5108,6 +5108,13 @@ func (ec *executionContext) unmarshalInputSearchBooksInput(ctx context.Context, 
 				return it, err
 			}
 			it.AuthorName = data
+		case "genre":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Genre = data
 		case "sortBy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)

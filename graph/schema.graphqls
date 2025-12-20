@@ -61,7 +61,8 @@ input SearchBooksInput {
   publisherId: ID
   seriesId: ID
   authorName: String
-  sortBy: String
+  genre: String
+  sortBy: String  # Options: title_asc, title_desc, date_asc, date_desc, author
   limit: Int = 20
   offset: Int = 0
 }

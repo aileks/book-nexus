@@ -2,6 +2,7 @@ package server
 
 import (
 	"book-nexus/graph"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
@@ -36,9 +37,42 @@ func (s *Server) setupRoutes() http.Handler {
 	// Main GraphQL endpoint
 	mux.Handle("/query", s.withLogging(srv))
 
+	// Health check endpoint for load balancers
+	mux.HandleFunc("/health", s.healthCheck)
+
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
 
 	return s.withCORS(mux)
+}
+
+func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Check database connection
+	if err := s.db.Health()["status"]; err == "down" {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":   "unhealthy",
+			"database": "down",
+		})
+		return
+	}
+
+	// Ping the database
+	if err := s.db.DB().Ping(ctx); err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":   "unhealthy",
+			"database": "connection failed",
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":   "healthy",
+		"database": "connected",
+	})
 }
 
 func (s *Server) withLogging(handler http.Handler) http.Handler {

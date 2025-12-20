@@ -60,6 +60,9 @@ export type Book = {
   recommendations: Array<Book>;
 };
 
+// Sort options for search
+export type SortOption = 'title_asc' | 'title_desc' | 'date_asc' | 'date_desc' | 'author';
+
 // Search input type
 export type SearchBooksInput = {
   query?: InputMaybe<string>;
@@ -67,7 +70,8 @@ export type SearchBooksInput = {
   publisherId?: InputMaybe<string>;
   seriesId?: InputMaybe<string>;
   authorName?: InputMaybe<string>;
-  sortBy?: InputMaybe<string>;
+  genre?: InputMaybe<string>;
+  sortBy?: InputMaybe<SortOption>;
   limit?: InputMaybe<number>;
   offset?: InputMaybe<number>;
 };

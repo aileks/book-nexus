@@ -9,7 +9,7 @@ export const graphqlClient = new GraphQLClient(endpoint, {
   },
 });
 
-export async function requestWithError<T>(query: string, variables?: unknown): Promise<T> {
+export async function requestWithError<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
   try {
     const result = await graphqlClient.request<T>(query, variables);
     return result;

@@ -200,6 +200,9 @@ const GET_SERIES_BY_SLUG_QUERY = `
 `;
 
 export function useSearchBooks(input: SearchBooksInput) {
+  // Allow search with either query or genre filter
+  const hasSearchCriteria = !!(input.query || input.genre);
+
   return useQuery({
     queryKey: ['searchBooks', input],
     queryFn: async () => {
@@ -209,7 +212,7 @@ export function useSearchBooks(input: SearchBooksInput) {
       );
       return data.searchBooks;
     },
-    enabled: !!input.query,
+    enabled: hasSearchCriteria,
   });
 }
 

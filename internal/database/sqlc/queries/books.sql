@@ -20,13 +20,15 @@ WHERE
   AND ($3::text = '' OR b.publisher_id::text = $3)
   AND ($4::text = '' OR b.series_id::text = $4)
   AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%')
+  AND ($6::text = '' OR b.genres ILIKE '%' || $6 || '%')
 ORDER BY
-  CASE
-    WHEN $6 = 'title' THEN b.title
-    WHEN $6 = 'published_date' THEN b.published_date::text
-    ELSE b.created_at::text
-  END DESC
-LIMIT $7 OFFSET $8;
+  CASE WHEN $7 = 'title_asc' THEN b.title END ASC,
+  CASE WHEN $7 = 'title_desc' THEN b.title END DESC,
+  CASE WHEN $7 = 'date_asc' THEN b.published_date END ASC NULLS LAST,
+  CASE WHEN $7 = 'date_desc' THEN b.published_date END DESC NULLS LAST,
+  CASE WHEN $7 = 'author' THEN a.name END ASC,
+  b.created_at DESC
+LIMIT $8 OFFSET $9;
 
 -- name: CountSearchResults :one
 SELECT COUNT(*) FROM books b
@@ -36,7 +38,8 @@ WHERE
   AND ($2::text = '' OR b.author_id::text = $2)
   AND ($3::text = '' OR b.publisher_id::text = $3)
   AND ($4::text = '' OR b.series_id::text = $4)
-  AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%');
+  AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%')
+  AND ($6::text = '' OR b.genres ILIKE '%' || $6 || '%');
 
 -- name: GetBooksByAuthor :many
 SELECT * FROM books

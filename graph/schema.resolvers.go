@@ -267,7 +267,7 @@ func (r *queryResolver) Book(ctx context.Context, id string) (*sqlc.Book, error)
 func (r *queryResolver) SearchBooks(ctx context.Context, input model.SearchBooksInput) (*model.SearchResult, error) {
 	svc := books.NewService(r.DB.DB())
 
-	var query, authorID, publisherID, seriesID, authorName, sortBy string
+	var query, authorID, publisherID, seriesID, authorName, genre, sortBy string
 	if input.Query != nil {
 		query = *input.Query
 	}
@@ -282,6 +282,9 @@ func (r *queryResolver) SearchBooks(ctx context.Context, input model.SearchBooks
 	}
 	if input.AuthorName != nil {
 		authorName = *input.AuthorName
+	}
+	if input.Genre != nil {
+		genre = *input.Genre
 	}
 	if input.SortBy != nil {
 		sortBy = *input.SortBy
@@ -302,6 +305,7 @@ func (r *queryResolver) SearchBooks(ctx context.Context, input model.SearchBooks
 		PublisherID: publisherID,
 		SeriesID:    seriesID,
 		AuthorName:  authorName,
+		Genre:       genre,
 		SortBy:      sortBy,
 		Limit:       limit,
 		Offset:      offset,

@@ -6,13 +6,18 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+const GENRES = [
+  { label: "Fantasy", genre: "Fantasy" },
+  { label: "Horror", genre: "Horror" },
+  { label: "Mystery", genre: "Mystery" },
+  { label: "Suspense", genre: "Suspense" },
+  { label: "Thriller", genre: "Thriller" },
+];
+
 const EXAMPLE_SEARCHES = [
-  { label: "Fantasy", query: "fantasy" },
-  { label: "Mystery", query: "mystery" },
-  { label: "Science Fiction", query: "science fiction" },
-  { label: "Romance", query: "romance" },
   { label: "Stephen King", query: "Stephen King" },
   { label: "Harry Potter", query: "Harry Potter" },
+  { label: "Brandon Sanderson", query: "Brandon Sanderson" },
 ];
 
 function HomePage() {
@@ -20,8 +25,12 @@ function HomePage() {
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      navigate({ to: "/search", search: { q: query.trim(), page: 1 } });
+      navigate({ to: "/search", search: { q: query.trim(), page: 1, genre: "", sort: "" } });
     }
+  };
+
+  const handleGenreClick = (genre: string) => {
+    navigate({ to: "/search", search: { q: "", page: 1, genre, sort: "" } });
   };
 
   return (
@@ -37,12 +46,29 @@ function HomePage() {
             Discover your next favorite book
           </p>
 
-          <div className="mb-8">
+          <div className="mb-10">
             <SearchBar onSearch={handleSearch} />
           </div>
 
+          {/* Browse by Genre */}
+          <div className="mb-8 space-y-3">
+            <p className="text-sm text-muted-foreground">Browse by genre:</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {GENRES.map((item) => (
+                <button
+                  key={item.genre}
+                  onClick={() => handleGenreClick(item.genre)}
+                  className="px-4 py-2 text-base rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Example searches */}
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Try searching for:</p>
+            <p className="text-sm text-muted-foreground">Or try searching for:</p>
             <div className="flex flex-wrap justify-center gap-2">
               {EXAMPLE_SEARCHES.map((example) => (
                 <button

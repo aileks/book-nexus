@@ -33,6 +33,7 @@ WHERE
   AND ($3::text = '' OR b.publisher_id::text = $3)
   AND ($4::text = '' OR b.series_id::text = $4)
   AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%')
+  AND ($6::text = '' OR b.genres ILIKE '%' || $6 || '%')
 `
 
 type CountSearchResultsParams struct {
@@ -41,6 +42,7 @@ type CountSearchResultsParams struct {
 	Column3 string
 	Column4 string
 	Column5 string
+	Column6 string
 }
 
 func (q *Queries) CountSearchResults(ctx context.Context, arg CountSearchResultsParams) (int64, error) {
@@ -50,6 +52,7 @@ func (q *Queries) CountSearchResults(ctx context.Context, arg CountSearchResults
 		arg.Column3,
 		arg.Column4,
 		arg.Column5,
+		arg.Column6,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -686,13 +689,15 @@ WHERE
   AND ($3::text = '' OR b.publisher_id::text = $3)
   AND ($4::text = '' OR b.series_id::text = $4)
   AND ($5::text = '' OR a.name ILIKE '%' || $5 || '%')
+  AND ($6::text = '' OR b.genres ILIKE '%' || $6 || '%')
 ORDER BY
-  CASE
-    WHEN $6 = 'title' THEN b.title
-    WHEN $6 = 'published_date' THEN b.published_date::text
-    ELSE b.created_at::text
-  END DESC
-LIMIT $7 OFFSET $8
+  CASE WHEN $7 = 'title_asc' THEN b.title END ASC,
+  CASE WHEN $7 = 'title_desc' THEN b.title END DESC,
+  CASE WHEN $7 = 'date_asc' THEN b.published_date END ASC NULLS LAST,
+  CASE WHEN $7 = 'date_desc' THEN b.published_date END DESC NULLS LAST,
+  CASE WHEN $7 = 'author' THEN a.name END ASC,
+  b.created_at DESC
+LIMIT $8 OFFSET $9
 `
 
 type SearchBooksParams struct {
@@ -701,7 +706,8 @@ type SearchBooksParams struct {
 	Column3 string
 	Column4 string
 	Column5 string
-	Column6 interface{}
+	Column6 string
+	Column7 interface{}
 	Limit   int32
 	Offset  int32
 }
@@ -714,6 +720,7 @@ func (q *Queries) SearchBooks(ctx context.Context, arg SearchBooksParams) ([]Boo
 		arg.Column4,
 		arg.Column5,
 		arg.Column6,
+		arg.Column7,
 		arg.Limit,
 		arg.Offset,
 	)
