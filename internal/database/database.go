@@ -40,7 +40,7 @@ func New() Service {
 
 	// Add search_path if provided
 	if schema := os.Getenv("DATABASE_SCHEMA"); schema != "" {
-		dbURL = fmt.Sprintf("%s&search_path=%s", dbURL, schema)
+		dbURL = fmt.Sprintf("%s?search_path=%s", dbURL, schema)
 	}
 
 	db, err := pgxpool.New(context.Background(), dbURL)
