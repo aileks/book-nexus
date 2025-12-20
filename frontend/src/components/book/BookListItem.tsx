@@ -1,17 +1,15 @@
+import { Link } from "@tanstack/react-router";
 import type { Book } from "@/lib/graphql/types";
 import { IconBook, IconUser, IconChevronRight } from "@tabler/icons-react";
 
-interface BookListItemProps {
+type BookListItemProps = {
   book: Book;
   onClick?: () => void;
-}
+};
 
 export function BookListItem({ book, onClick }: BookListItemProps) {
-  return (
-    <div
-      className="flex items-center gap-4 p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors"
-      onClick={onClick}
-    >
+  const content = (
+    <div className="flex items-center gap-4 p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors">
       {book.imageUrl ? (
         <img
           src={book.imageUrl}
@@ -25,23 +23,23 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
       )}
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-base line-clamp-1">{book.title}</h3>
+        <h3 className="font-semibold text-lg line-clamp-1">{book.title}</h3>
         {book.subtitle && (
-          <p className="text-sm text-muted-foreground line-clamp-1">
+          <p className="text-base text-muted-foreground line-clamp-1">
             {book.subtitle}
           </p>
         )}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-          <IconUser className="w-3 h-3" />
+        <div className="flex items-center gap-2 text-base text-muted-foreground mt-1">
+          <IconUser className="w-4 h-4" />
           <span className="line-clamp-1">{book.author.name}</span>
         </div>
 
-        {(book.publisher || book.seriesName) && (
-          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-            {book.publisher && <span>{book.publisher}</span>}
-            {book.seriesName && (
+        {(book.publisher || book.series) && (
+          <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+            {book.publisher && <span>{book.publisher.name}</span>}
+            {book.series && (
               <SeriesBadge
-                seriesName={book.seriesName}
+                seriesName={book.series.name}
                 position={book.seriesPosition}
               />
             )}
@@ -56,7 +54,7 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
               .map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
+                  className="text-sm bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
                 >
                   {tag.trim()}
                 </span>
@@ -68,12 +66,22 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
       <IconChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
     </div>
   );
+
+  if (onClick) {
+    return <div onClick={onClick}>{content}</div>;
+  }
+
+  return (
+    <Link to="/book/$id" params={{ id: book.id }} className="block">
+      {content}
+    </Link>
+  );
 }
 
-interface SeriesBadgeProps {
+type SeriesBadgeProps = {
   seriesName: string;
   position?: number | null;
-}
+};
 
 function SeriesBadge({ seriesName, position }: SeriesBadgeProps) {
   return (

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ControlledSearchBar } from "@/components/search/SearchBar";
 import { BookCard, BookListItem, ViewToggle, type ViewMode } from "@/components/book";
 import { useSearchBooks } from "@/lib/graphql/queries";
@@ -18,34 +18,30 @@ export const Route = createFileRoute("/search")({
 
 function SearchResultsPage() {
   const { q } = Route.useSearch();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState(q);
 
-  console.log('SearchResultsPage rendered with q:', q);
-  
   const { data, isLoading, error } = useSearchBooks({
     query: q || undefined,
     limit: 20,
   });
 
-  console.log('useSearchBooks result:', { data, isLoading, error });
-
   const books = data?.books || [];
   const total = data?.total || 0;
 
-  const handleSearch = (searchQuery: string) => {
-    console.log('handleSearch called with:', searchQuery);
-    if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      navigate({ to: "/search", search: { q: query.trim() } });
     } else {
-      window.location.href = "/";
+      navigate({ to: "/" });
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-5">
           <div className="max-w-3xl mx-auto">
             <ControlledSearchBar
               value={searchQuery}
@@ -58,26 +54,26 @@ function SearchResultsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-10">
         {isLoading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
           </div>
         )}
 
         {error && (
-          <Card className="p-6 text-center">
-            <IconSearch className="w-12 h-12 mx-auto mb-4 text-destructive" />
-            <h3 className="text-lg font-semibold mb-2">Search Error</h3>
-            <p className="text-muted-foreground">{(error as Error).message}</p>
+          <Card className="p-8 text-center">
+            <IconSearch className="w-14 h-14 mx-auto mb-4 text-destructive" />
+            <h3 className="text-xl font-semibold mb-2">Search Error</h3>
+            <p className="text-muted-foreground text-lg">{(error as Error).message}</p>
           </Card>
         )}
 
         {books.length > 0 && (
           <section>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="text-xl font-semibold">
+                <h3 className="text-2xl font-semibold">
                   {total} {total === 1 ? "book" : "books"} found
                   {q && ` for "${q}"`}
                 </h3>
@@ -88,21 +84,13 @@ function SearchResultsPage() {
             {viewMode === "cards" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {books.map((book: Book) => (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    onClick={() => console.log("Book clicked:", book.title)}
-                  />
+                  <BookCard key={book.id} book={book} />
                 ))}
               </div>
             ) : (
               <div className="space-y-0">
                 {books.map((book: Book) => (
-                  <BookListItem
-                    key={book.id}
-                    book={book}
-                    onClick={() => console.log("Book clicked:", book.title)}
-                  />
+                  <BookListItem key={book.id} book={book} />
                 ))}
               </div>
             )}
@@ -110,18 +98,18 @@ function SearchResultsPage() {
         )}
 
         {!isLoading && !error && books.length === 0 && q && (
-          <Card className="p-12 text-center">
-            <IconSearch className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">No books found</h3>
-            <p className="text-muted-foreground">Try a different search term</p>
+          <Card className="p-16 text-center">
+            <IconSearch className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
+            <h3 className="text-2xl font-semibold mb-3">No books found</h3>
+            <p className="text-muted-foreground text-lg">Try a different search term</p>
           </Card>
         )}
 
         {!q && (
-          <Card className="p-12 text-center">
-            <IconBook className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">Start Searching</h3>
-            <p className="text-muted-foreground">
+          <Card className="p-16 text-center">
+            <IconBook className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
+            <h3 className="text-2xl font-semibold mb-3">Start Searching</h3>
+            <p className="text-muted-foreground text-lg">
               Enter a search term above to discover books
             </p>
           </Card>

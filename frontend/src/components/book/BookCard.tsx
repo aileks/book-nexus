@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
   Card,
   CardContent,
@@ -9,17 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import type { Book } from "@/lib/graphql/types";
 import { IconBook, IconUser } from "@tabler/icons-react";
 
-interface BookCardProps {
+type BookCardProps = {
   book: Book;
   onClick?: () => void;
-}
+};
 
 export function BookCard({ book, onClick }: BookCardProps) {
-  return (
-    <Card
-      className="h-full hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={onClick}
-    >
+  const content = (
+    <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
       {book.imageUrl ? (
         <img
           src={book.imageUrl}
@@ -32,29 +30,29 @@ export function BookCard({ book, onClick }: BookCardProps) {
         </div>
       )}
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg line-clamp-2">{book.title}</CardTitle>
+        <CardTitle className="text-xl line-clamp-2">{book.title}</CardTitle>
         {book.subtitle && (
-          <CardDescription className="line-clamp-1">
+          <CardDescription className="text-base line-clamp-1">
             {book.subtitle}
           </CardDescription>
         )}
       </CardHeader>
       <CardContent className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-base text-muted-foreground">
           <IconUser className="w-4 h-4" />
           <span className="line-clamp-1">{book.author.name}</span>
         </div>
 
         {book.publisher && (
-          <p className="text-sm text-muted-foreground line-clamp-1">
-            {book.publisher}
+          <p className="text-base text-muted-foreground line-clamp-1">
+            {book.publisher.name}
           </p>
         )}
 
-        {book.seriesName && (
+        {book.series && (
           <div className="pt-2">
             <SeriesBadge
-              seriesName={book.seriesName}
+              seriesName={book.series.name}
               position={book.seriesPosition}
             />
           </div>
@@ -75,12 +73,22 @@ export function BookCard({ book, onClick }: BookCardProps) {
       </CardContent>
     </Card>
   );
+
+  if (onClick) {
+    return <div onClick={onClick}>{content}</div>;
+  }
+
+  return (
+    <Link to="/book/$id" params={{ id: book.id }} className="block">
+      {content}
+    </Link>
+  );
 }
 
-interface SeriesBadgeProps {
+type SeriesBadgeProps = {
   seriesName: string;
   position?: number | null;
-}
+};
 
 function SeriesBadge({ seriesName, position }: SeriesBadgeProps) {
   return (

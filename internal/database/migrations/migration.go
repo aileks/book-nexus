@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -338,22 +339,17 @@ func getOrCreateAuthor(ctx context.Context, pool *pgxpool.Pool, name string) (st
 	if err == nil {
 		return id, nil
 	}
-	if err != pgx.ErrNoRows {
+	if !errors.Is(err, pgx.ErrNoRows) {
 		return "", err
 	}
 
-	// Create new author
-	slug := slugify(name)
+	// Create new author - use unique slug with suffix if needed
+	slug := findUniqueSlug(ctx, pool, "authors", slugify(name))
 	err = pool.QueryRow(ctx,
-		"INSERT INTO authors (name, slug) VALUES ($1, $2) RETURNING id",
+		"INSERT INTO authors (name, slug) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
 		name, slug,
 	).Scan(&id)
 	if err != nil {
-		// Handle race condition - try to select again
-		if strings.Contains(err.Error(), "duplicate key") {
-			err = pool.QueryRow(ctx, "SELECT id FROM authors WHERE name = $1", name).Scan(&id)
-			return id, err
-		}
 		return "", err
 	}
 	return id, nil
@@ -366,21 +362,17 @@ func getOrCreatePublisher(ctx context.Context, pool *pgxpool.Pool, name string) 
 	if err == nil {
 		return id, nil
 	}
-	if err != pgx.ErrNoRows {
+	if !errors.Is(err, pgx.ErrNoRows) {
 		return "", err
 	}
 
-	// Create new publisher
-	slug := slugify(name)
+	// Create new publisher - use unique slug with suffix if needed
+	slug := findUniqueSlug(ctx, pool, "publishers", slugify(name))
 	err = pool.QueryRow(ctx,
-		"INSERT INTO publishers (name, slug) VALUES ($1, $2) RETURNING id",
+		"INSERT INTO publishers (name, slug) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
 		name, slug,
 	).Scan(&id)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
-			err = pool.QueryRow(ctx, "SELECT id FROM publishers WHERE name = $1", name).Scan(&id)
-			return id, err
-		}
 		return "", err
 	}
 	return id, nil
@@ -393,24 +385,39 @@ func getOrCreateSeries(ctx context.Context, pool *pgxpool.Pool, name string) (st
 	if err == nil {
 		return id, nil
 	}
-	if err != pgx.ErrNoRows {
+	if !errors.Is(err, pgx.ErrNoRows) {
 		return "", err
 	}
 
-	// Create new series
-	slug := slugify(name)
+	// Create new series - use unique slug with suffix if needed
+	slug := findUniqueSlug(ctx, pool, "series", slugify(name))
 	err = pool.QueryRow(ctx,
-		"INSERT INTO series (name, slug) VALUES ($1, $2) RETURNING id",
+		"INSERT INTO series (name, slug) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
 		name, slug,
 	).Scan(&id)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
-			err = pool.QueryRow(ctx, "SELECT id FROM series WHERE name = $1", name).Scan(&id)
-			return id, err
-		}
 		return "", err
 	}
 	return id, nil
+}
+
+// findUniqueSlug checks if slug exists and adds numeric suffix if needed.
+func findUniqueSlug(ctx context.Context, pool *pgxpool.Pool, table, baseSlug string) *string {
+	if baseSlug == "" {
+		return nil
+	}
+
+	slug := baseSlug
+	for i := 1; i <= 100; i++ {
+		var exists bool
+		query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE slug = $1)", table)
+		err := pool.QueryRow(ctx, query, slug).Scan(&exists)
+		if err != nil || !exists {
+			return &slug
+		}
+		slug = fmt.Sprintf("%s-%d", baseSlug, i)
+	}
+	return &slug
 }
 
 // slugify converts a name to a URL-friendly slug.
