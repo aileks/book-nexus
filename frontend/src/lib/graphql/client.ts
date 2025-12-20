@@ -1,6 +1,7 @@
 import { GraphQLClient } from 'graphql-request';
 
-const endpoint = '/query';
+// Use full URL for graphql-request compatibility
+const endpoint = `${window.location.origin}/query`;
 
 export const graphqlClient = new GraphQLClient(endpoint, {
   headers: {
@@ -8,14 +9,9 @@ export const graphqlClient = new GraphQLClient(endpoint, {
   },
 });
 
-// Add error handling wrapper
-export async function requestWithError<T>(query: string, variables?: any): Promise<T> {
+export async function requestWithError<T>(query: string, variables?: unknown): Promise<T> {
   try {
-    console.log('Making GraphQL request to:', endpoint);
-    console.log('Query:', query.substring(0, 100) + '...');
-    console.log('Variables:', variables);
     const result = await graphqlClient.request<T>(query, variables);
-    console.log('GraphQL response:', result);
     return result;
   } catch (error) {
     console.error('GraphQL request failed:', error);

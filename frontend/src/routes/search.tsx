@@ -1,41 +1,54 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ControlledSearchBar } from "@/components/search/SearchBar";
 import { BookCard, BookListItem, ViewToggle, type ViewMode } from "@/components/book";
+import { Pagination } from "@/components/search/Pagination";
 import { useSearchBooks } from "@/lib/graphql/queries";
 import { Card } from "@/components/ui/card";
 import { IconBook, IconSearch } from "@tabler/icons-react";
 import type { Book } from "@/lib/graphql/types";
 import { useState } from "react";
 
+const ITEMS_PER_PAGE = 20;
+
 export const Route = createFileRoute("/search")({
   component: SearchResultsPage,
   validateSearch: (search: Record<string, unknown>) => {
     return {
       q: (search.q as string) || "",
+      page: Number(search.page) || 1,
     };
   },
 });
 
 function SearchResultsPage() {
-  const { q } = Route.useSearch();
+  const { q, page } = Route.useSearch();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState(q);
 
+  const offset = (page - 1) * ITEMS_PER_PAGE;
+
   const { data, isLoading, error } = useSearchBooks({
     query: q || undefined,
-    limit: 20,
+    limit: ITEMS_PER_PAGE,
+    offset,
   });
 
   const books = data?.books || [];
   const total = data?.total || 0;
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      navigate({ to: "/search", search: { q: query.trim() } });
+      navigate({ to: "/search", search: { q: query.trim(), page: 1 } });
     } else {
       navigate({ to: "/" });
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    navigate({ to: "/search", search: { q, page: newPage } });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -77,6 +90,11 @@ function SearchResultsPage() {
                   {total} {total === 1 ? "book" : "books"} found
                   {q && ` for "${q}"`}
                 </h3>
+                {totalPages > 1 && (
+                  <p className="text-muted-foreground mt-1">
+                    Page {page} of {totalPages}
+                  </p>
+                )}
               </div>
               <ViewToggle value={viewMode} onChange={setViewMode} />
             </div>
@@ -94,6 +112,12 @@ function SearchResultsPage() {
                 ))}
               </div>
             )}
+
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </section>
         )}
 
