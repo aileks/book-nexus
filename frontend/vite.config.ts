@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default defineConfig({
   plugins: [
     tanstackRouter({
@@ -21,7 +23,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/query": {
-        target: "http://localhost:8080",
+        target: API_URL,
         changeOrigin: true,
       },
     },
