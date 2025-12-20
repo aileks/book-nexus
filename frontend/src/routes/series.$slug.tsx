@@ -13,10 +13,16 @@ export const Route = createFileRoute("/series/$slug")({
       <SeriesPage />
     </ErrorBoundary>
   ),
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      bookId: (search.bookId as string) || undefined,
+    };
+  },
 });
 
 function SeriesPage() {
   const { slug } = Route.useParams();
+  const { bookId } = Route.useSearch();
   const { data: series, isLoading, error, refetch } = useSeriesBySlug(slug);
 
   if (isLoading) {
@@ -32,7 +38,7 @@ function SeriesPage() {
     return (
       <div className="min-h-screen">
         <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
-          <BackToSearch />
+          <BackToSearch bookId={bookId} />
           <Card className="p-8 sm:p-16 text-center">
             <IconStack2 className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 text-muted-foreground" />
             <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">
@@ -54,7 +60,7 @@ function SeriesPage() {
     return (
       <div className="min-h-screen">
         <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
-          <BackToSearch />
+          <BackToSearch bookId={bookId} />
           <Card className="p-8 sm:p-16 text-center">
             <IconStack2 className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 text-muted-foreground" />
             <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">

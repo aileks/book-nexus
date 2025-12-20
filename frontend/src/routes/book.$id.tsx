@@ -139,6 +139,7 @@ function BookDetailPage() {
                 <Link
                   to="/series/$slug"
                   params={{ slug: book.series.slug || book.series.id }}
+                  search={{ bookId: id }}
                   className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg hover:text-primary"
                 >
                   <IconStack2 className="w-5 h-5 sm:w-6 sm:h-6" />
