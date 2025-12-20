@@ -1,7 +1,7 @@
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
 export default defineConfig(({ mode }) => {
@@ -13,7 +13,18 @@ export default defineConfig(({ mode }) => {
   // Note: In client code, use import.meta.env.VITE_API_URL instead
   const API_URL = env.VITE_API_URL || "http://localhost:8080";
 
+  // Plugin to remove crossorigin attribute for file:// protocol compatibility
+  const removeCrossoriginPlugin = (): Plugin => {
+    return {
+      name: "remove-crossorigin",
+      transformIndexHtml(html) {
+        return html.replace(/\s+crossorigin/g, "");
+      },
+    };
+  };
+
   return {
+    base: "./",
     plugins: [
       tanstackRouter({
         target: "react",
@@ -21,6 +32,7 @@ export default defineConfig(({ mode }) => {
       }),
       react(),
       tailwindcss(),
+      removeCrossoriginPlugin(),
     ],
     resolve: {
       alias: {
@@ -34,6 +46,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
       },
+    },
+    build: {
+      sourcemap: mode === "development",
+      minify: mode === "production" ? "esbuild" : false,
     },
   };
 });
