@@ -12,6 +12,35 @@ import (
 	"github.com/google/uuid"
 )
 
+const countSearchResults = `-- name: CountSearchResults :one
+SELECT COUNT(*) as total
+FROM books
+WHERE 
+  ($1::text IS NULL OR title ILIKE '%' || $1 || '%')
+  AND ($2::text IS NULL OR author ILIKE '%' || $2 || '%')
+  AND ($3::text IS NULL OR publisher ILIKE '%' || $3 || '%')
+  AND ($4::text IS NULL OR series_name ILIKE '%' || $4 || '%')
+`
+
+type CountSearchResultsParams struct {
+	Column1 string
+	Column2 string
+	Column3 string
+	Column4 string
+}
+
+func (q *Queries) CountSearchResults(ctx context.Context, arg CountSearchResultsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countSearchResults,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+	)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const createBook = `-- name: CreateBook :one
 INSERT INTO books (title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
@@ -243,6 +272,27 @@ func (q *Queries) GetBooksBySeries(ctx context.Context, seriesName *string) ([]B
 	return items, nil
 }
 
+const getSeriesByName = `-- name: GetSeriesByName :one
+SELECT 
+  series_name as name,
+  COUNT(*) as book_count
+FROM books
+WHERE series_name = $1
+GROUP BY series_name
+`
+
+type GetSeriesByNameRow struct {
+	Name      *string
+	BookCount int64
+}
+
+func (q *Queries) GetSeriesByName(ctx context.Context, seriesName *string) (GetSeriesByNameRow, error) {
+	row := q.db.QueryRow(ctx, getSeriesByName, seriesName)
+	var i GetSeriesByNameRow
+	err := row.Scan(&i.Name, &i.BookCount)
+	return i, err
+}
+
 const listAuthors = `-- name: ListAuthors :many
 SELECT DISTINCT author
 FROM books
@@ -320,6 +370,41 @@ func (q *Queries) ListBooks(ctx context.Context, arg ListBooksParams) ([]Book, e
 	return items, nil
 }
 
+const listSeries = `-- name: ListSeries :many
+SELECT 
+  DISTINCT series_name as name,
+  COUNT(*) as book_count
+FROM books
+WHERE series_name IS NOT NULL
+GROUP BY series_name
+ORDER BY series_name
+`
+
+type ListSeriesRow struct {
+	Name      *string
+	BookCount int64
+}
+
+func (q *Queries) ListSeries(ctx context.Context) ([]ListSeriesRow, error) {
+	rows, err := q.db.Query(ctx, listSeries)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSeriesRow
+	for rows.Next() {
+		var i ListSeriesRow
+		if err := rows.Scan(&i.Name, &i.BookCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const searchAuthors = `-- name: SearchAuthors :many
 SELECT DISTINCT author
 FROM books
@@ -347,22 +432,45 @@ func (q *Queries) SearchAuthors(ctx context.Context, dollar_1 *string) ([]string
 	return items, nil
 }
 
-const searchBooksByTitle = `-- name: SearchBooksByTitle :many
+const searchBooks = `-- name: SearchBooks :many
 SELECT id, title, subtitle, author, publisher, published_date, isbn10, isbn13, pages, language, description, series_name, series_position, genres, tags, image_url, created_at, updated_at
 FROM books
-WHERE title ILIKE '%' || $1 || '%'
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+WHERE 
+  ($1::text IS NULL OR title ILIKE '%' || $1 || '%')
+  AND ($2::text IS NULL OR author ILIKE '%' || $2 || '%')
+  AND ($3::text IS NULL OR publisher ILIKE '%' || $3 || '%')
+  AND ($4::text IS NULL OR series_name ILIKE '%' || $4 || '%')
+ORDER BY 
+  CASE 
+    WHEN $5 = 'title' THEN title
+    WHEN $5 = 'author' THEN author
+    WHEN $5 = 'published_date' THEN published_date::text
+    WHEN $5 = 'created_at' THEN created_at::text
+  END,
+  created_at DESC
+LIMIT $6 OFFSET $7
 `
 
-type SearchBooksByTitleParams struct {
-	Column1 *string
+type SearchBooksParams struct {
+	Column1 string
+	Column2 string
+	Column3 string
+	Column4 string
+	Column5 interface{}
 	Limit   int32
 	Offset  int32
 }
 
-func (q *Queries) SearchBooksByTitle(ctx context.Context, arg SearchBooksByTitleParams) ([]Book, error) {
-	rows, err := q.db.Query(ctx, searchBooksByTitle, arg.Column1, arg.Limit, arg.Offset)
+func (q *Queries) SearchBooks(ctx context.Context, arg SearchBooksParams) ([]Book, error) {
+	rows, err := q.db.Query(ctx, searchBooks,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

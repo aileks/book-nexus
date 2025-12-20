@@ -34,3 +34,29 @@ type NewBook struct {
 
 type Query struct {
 }
+
+type SearchBooksInput struct {
+	Query     *string `json:"query,omitempty"`
+	Author    *string `json:"author,omitempty"`
+	Publisher *string `json:"publisher,omitempty"`
+	Series    *string `json:"series,omitempty"`
+	Genres    *string `json:"genres,omitempty"`
+	Tags      *string `json:"tags,omitempty"`
+	SortBy    *string `json:"sortBy,omitempty"`
+	Limit     *int32  `json:"limit,omitempty"`
+	Offset    *int32  `json:"offset,omitempty"`
+}
+
+type SearchResult struct {
+	Books []*sqlc.Book `json:"books"`
+	Total int32        `json:"total"`
+}
+
+type Series struct {
+	ID          string       `json:"id"`
+	Name        string       `json:"name"`
+	Slug        *string      `json:"slug,omitempty"`
+	Description *string      `json:"description,omitempty"`
+	Books       []*sqlc.Book `json:"books"`
+	BookCount   int32        `json:"bookCount"`
+}

@@ -56,24 +56,25 @@ type ComplexityRoot struct {
 	}
 
 	Book struct {
-		Author         func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		Description    func(childComplexity int) int
-		Genres         func(childComplexity int) int
-		ID             func(childComplexity int) int
-		ImageUrl       func(childComplexity int) int
-		Isbn10         func(childComplexity int) int
-		Isbn13         func(childComplexity int) int
-		Language       func(childComplexity int) int
-		Pages          func(childComplexity int) int
-		PublishedDate  func(childComplexity int) int
-		Publisher      func(childComplexity int) int
-		SeriesName     func(childComplexity int) int
-		SeriesPosition func(childComplexity int) int
-		Subtitle       func(childComplexity int) int
-		Tags           func(childComplexity int) int
-		Title          func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
+		Author          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Description     func(childComplexity int) int
+		Genres          func(childComplexity int) int
+		ID              func(childComplexity int) int
+		ImageUrl        func(childComplexity int) int
+		Isbn10          func(childComplexity int) int
+		Isbn13          func(childComplexity int) int
+		Language        func(childComplexity int) int
+		Pages           func(childComplexity int) int
+		PublishedDate   func(childComplexity int) int
+		Publisher       func(childComplexity int) int
+		Recommendations func(childComplexity int) int
+		SeriesName      func(childComplexity int) int
+		SeriesPosition  func(childComplexity int) int
+		Subtitle        func(childComplexity int) int
+		Tags            func(childComplexity int) int
+		Title           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -81,9 +82,26 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Authors func(childComplexity int, search *string) int
-		Book    func(childComplexity int, id string) int
-		Books   func(childComplexity int) int
+		Authors     func(childComplexity int, search *string) int
+		Book        func(childComplexity int, id string) int
+		Books       func(childComplexity int) int
+		SearchBooks func(childComplexity int, input model.SearchBooksInput) int
+		Series      func(childComplexity int, id string) int
+		SeriesList  func(childComplexity int) int
+	}
+
+	SearchResult struct {
+		Books func(childComplexity int) int
+		Total func(childComplexity int) int
+	}
+
+	Series struct {
+		BookCount   func(childComplexity int) int
+		Books       func(childComplexity int) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Slug        func(childComplexity int) int
 	}
 }
 
@@ -99,6 +117,7 @@ type BookResolver interface {
 
 	CreatedAt(ctx context.Context, obj *sqlc.Book) (string, error)
 	UpdatedAt(ctx context.Context, obj *sqlc.Book) (string, error)
+	Recommendations(ctx context.Context, obj *sqlc.Book) ([]*sqlc.Book, error)
 }
 type MutationResolver interface {
 	CreateBook(ctx context.Context, input model.NewBook) (*sqlc.Book, error)
@@ -107,6 +126,9 @@ type QueryResolver interface {
 	Books(ctx context.Context) ([]*sqlc.Book, error)
 	Book(ctx context.Context, id string) (*sqlc.Book, error)
 	Authors(ctx context.Context, search *string) ([]*model.Author, error)
+	SearchBooks(ctx context.Context, input model.SearchBooksInput) (*model.SearchResult, error)
+	Series(ctx context.Context, id string) (*model.Series, error)
+	SeriesList(ctx context.Context) ([]*model.Series, error)
 }
 
 type executableSchema struct {
@@ -213,6 +235,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Book.Publisher(childComplexity), true
+	case "Book.recommendations":
+		if e.complexity.Book.Recommendations == nil {
+			break
+		}
+
+		return e.complexity.Book.Recommendations(childComplexity), true
 	case "Book.seriesName":
 		if e.complexity.Book.SeriesName == nil {
 			break
@@ -290,6 +318,84 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Books(childComplexity), true
+	case "Query.searchBooks":
+		if e.complexity.Query.SearchBooks == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchBooks_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchBooks(childComplexity, args["input"].(model.SearchBooksInput)), true
+	case "Query.series":
+		if e.complexity.Query.Series == nil {
+			break
+		}
+
+		args, err := ec.field_Query_series_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Series(childComplexity, args["id"].(string)), true
+	case "Query.seriesList":
+		if e.complexity.Query.SeriesList == nil {
+			break
+		}
+
+		return e.complexity.Query.SeriesList(childComplexity), true
+
+	case "SearchResult.books":
+		if e.complexity.SearchResult.Books == nil {
+			break
+		}
+
+		return e.complexity.SearchResult.Books(childComplexity), true
+	case "SearchResult.total":
+		if e.complexity.SearchResult.Total == nil {
+			break
+		}
+
+		return e.complexity.SearchResult.Total(childComplexity), true
+
+	case "Series.bookCount":
+		if e.complexity.Series.BookCount == nil {
+			break
+		}
+
+		return e.complexity.Series.BookCount(childComplexity), true
+	case "Series.books":
+		if e.complexity.Series.Books == nil {
+			break
+		}
+
+		return e.complexity.Series.Books(childComplexity), true
+	case "Series.description":
+		if e.complexity.Series.Description == nil {
+			break
+		}
+
+		return e.complexity.Series.Description(childComplexity), true
+	case "Series.id":
+		if e.complexity.Series.ID == nil {
+			break
+		}
+
+		return e.complexity.Series.ID(childComplexity), true
+	case "Series.name":
+		if e.complexity.Series.Name == nil {
+			break
+		}
+
+		return e.complexity.Series.Name(childComplexity), true
+	case "Series.slug":
+		if e.complexity.Series.Slug == nil {
+			break
+		}
+
+		return e.complexity.Series.Slug(childComplexity), true
 
 	}
 	return 0, false
@@ -300,6 +406,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputNewBook,
+		ec.unmarshalInputSearchBooksInput,
 	)
 	first := true
 
@@ -460,6 +567,28 @@ func (ec *executionContext) field_Query_book_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_searchBooks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSearchBooksInput2bookᚑnexusᚋgraphᚋmodelᚐSearchBooksInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_series_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -601,6 +730,8 @@ func (ec *executionContext) fieldContext_Author_books(_ context.Context, field g
 				return ec.fieldContext_Book_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -1136,6 +1267,75 @@ func (ec *executionContext) fieldContext_Book_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Book_recommendations(ctx context.Context, field graphql.CollectedField, obj *sqlc.Book) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Book_recommendations,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Book().Recommendations(ctx, obj)
+		},
+		nil,
+		ec.marshalNBook2ᚕᚖbookᚑnexusᚋinternalᚋdatabaseᚋsqlcᚐBookᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Book_recommendations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Book",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Book_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Book_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_Book_subtitle(ctx, field)
+			case "author":
+				return ec.fieldContext_Book_author(ctx, field)
+			case "publisher":
+				return ec.fieldContext_Book_publisher(ctx, field)
+			case "publishedDate":
+				return ec.fieldContext_Book_publishedDate(ctx, field)
+			case "isbn10":
+				return ec.fieldContext_Book_isbn10(ctx, field)
+			case "isbn13":
+				return ec.fieldContext_Book_isbn13(ctx, field)
+			case "pages":
+				return ec.fieldContext_Book_pages(ctx, field)
+			case "language":
+				return ec.fieldContext_Book_language(ctx, field)
+			case "description":
+				return ec.fieldContext_Book_description(ctx, field)
+			case "seriesName":
+				return ec.fieldContext_Book_seriesName(ctx, field)
+			case "seriesPosition":
+				return ec.fieldContext_Book_seriesPosition(ctx, field)
+			case "genres":
+				return ec.fieldContext_Book_genres(ctx, field)
+			case "tags":
+				return ec.fieldContext_Book_tags(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_Book_imageUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Book_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createBook(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1197,6 +1397,8 @@ func (ec *executionContext) fieldContext_Mutation_createBook(ctx context.Context
 				return ec.fieldContext_Book_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -1275,6 +1477,8 @@ func (ec *executionContext) fieldContext_Query_books(_ context.Context, field gr
 				return ec.fieldContext_Book_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -1343,6 +1547,8 @@ func (ec *executionContext) fieldContext_Query_book(ctx context.Context, field g
 				return ec.fieldContext_Book_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -1404,6 +1610,151 @@ func (ec *executionContext) fieldContext_Query_authors(ctx context.Context, fiel
 	if fc.Args, err = ec.field_Query_authors_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchBooks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_searchBooks,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().SearchBooks(ctx, fc.Args["input"].(model.SearchBooksInput))
+		},
+		nil,
+		ec.marshalNSearchResult2ᚖbookᚑnexusᚋgraphᚋmodelᚐSearchResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_searchBooks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "books":
+				return ec.fieldContext_SearchResult_books(ctx, field)
+			case "total":
+				return ec.fieldContext_SearchResult_total(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SearchResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchBooks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_series(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_series,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Series(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOSeries2ᚖbookᚑnexusᚋgraphᚋmodelᚐSeries,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_series(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Series_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Series_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Series_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Series_description(ctx, field)
+			case "books":
+				return ec.fieldContext_Series_books(ctx, field)
+			case "bookCount":
+				return ec.fieldContext_Series_bookCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Series", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_series_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_seriesList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_seriesList,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().SeriesList(ctx)
+		},
+		nil,
+		ec.marshalNSeries2ᚕᚖbookᚑnexusᚋgraphᚋmodelᚐSeriesᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_seriesList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Series_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Series_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Series_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Series_description(ctx, field)
+			case "books":
+				return ec.fieldContext_Series_books(ctx, field)
+			case "bookCount":
+				return ec.fieldContext_Series_bookCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Series", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -1511,6 +1862,318 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchResult_books(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchResult_books,
+		func(ctx context.Context) (any, error) {
+			return obj.Books, nil
+		},
+		nil,
+		ec.marshalNBook2ᚕᚖbookᚑnexusᚋinternalᚋdatabaseᚋsqlcᚐBookᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchResult_books(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Book_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Book_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_Book_subtitle(ctx, field)
+			case "author":
+				return ec.fieldContext_Book_author(ctx, field)
+			case "publisher":
+				return ec.fieldContext_Book_publisher(ctx, field)
+			case "publishedDate":
+				return ec.fieldContext_Book_publishedDate(ctx, field)
+			case "isbn10":
+				return ec.fieldContext_Book_isbn10(ctx, field)
+			case "isbn13":
+				return ec.fieldContext_Book_isbn13(ctx, field)
+			case "pages":
+				return ec.fieldContext_Book_pages(ctx, field)
+			case "language":
+				return ec.fieldContext_Book_language(ctx, field)
+			case "description":
+				return ec.fieldContext_Book_description(ctx, field)
+			case "seriesName":
+				return ec.fieldContext_Book_seriesName(ctx, field)
+			case "seriesPosition":
+				return ec.fieldContext_Book_seriesPosition(ctx, field)
+			case "genres":
+				return ec.fieldContext_Book_genres(ctx, field)
+			case "tags":
+				return ec.fieldContext_Book_tags(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_Book_imageUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Book_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchResult_total(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchResult_total,
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchResult_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Series_id(ctx context.Context, field graphql.CollectedField, obj *model.Series) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Series_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Series_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Series",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Series_name(ctx context.Context, field graphql.CollectedField, obj *model.Series) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Series_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Series_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Series",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Series_slug(ctx context.Context, field graphql.CollectedField, obj *model.Series) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Series_slug,
+		func(ctx context.Context) (any, error) {
+			return obj.Slug, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Series_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Series",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Series_description(ctx context.Context, field graphql.CollectedField, obj *model.Series) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Series_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Series_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Series",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Series_books(ctx context.Context, field graphql.CollectedField, obj *model.Series) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Series_books,
+		func(ctx context.Context) (any, error) {
+			return obj.Books, nil
+		},
+		nil,
+		ec.marshalNBook2ᚕᚖbookᚑnexusᚋinternalᚋdatabaseᚋsqlcᚐBookᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Series_books(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Series",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Book_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Book_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_Book_subtitle(ctx, field)
+			case "author":
+				return ec.fieldContext_Book_author(ctx, field)
+			case "publisher":
+				return ec.fieldContext_Book_publisher(ctx, field)
+			case "publishedDate":
+				return ec.fieldContext_Book_publishedDate(ctx, field)
+			case "isbn10":
+				return ec.fieldContext_Book_isbn10(ctx, field)
+			case "isbn13":
+				return ec.fieldContext_Book_isbn13(ctx, field)
+			case "pages":
+				return ec.fieldContext_Book_pages(ctx, field)
+			case "language":
+				return ec.fieldContext_Book_language(ctx, field)
+			case "description":
+				return ec.fieldContext_Book_description(ctx, field)
+			case "seriesName":
+				return ec.fieldContext_Book_seriesName(ctx, field)
+			case "seriesPosition":
+				return ec.fieldContext_Book_seriesPosition(ctx, field)
+			case "genres":
+				return ec.fieldContext_Book_genres(ctx, field)
+			case "tags":
+				return ec.fieldContext_Book_tags(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_Book_imageUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Book_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Book_updatedAt(ctx, field)
+			case "recommendations":
+				return ec.fieldContext_Book_recommendations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Series_bookCount(ctx context.Context, field graphql.CollectedField, obj *model.Series) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Series_bookCount,
+		func(ctx context.Context) (any, error) {
+			return obj.BookCount, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Series_bookCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Series",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3087,6 +3750,96 @@ func (ec *executionContext) unmarshalInputNewBook(ctx context.Context, obj any) 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSearchBooksInput(ctx context.Context, obj any) (model.SearchBooksInput, error) {
+	var it model.SearchBooksInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["limit"]; !present {
+		asMap["limit"] = 20
+	}
+	if _, present := asMap["offset"]; !present {
+		asMap["offset"] = 0
+	}
+
+	fieldsInOrder := [...]string{"query", "author", "publisher", "series", "genres", "tags", "sortBy", "limit", "offset"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "query":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
+		case "author":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("author"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Author = data
+		case "publisher":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publisher"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Publisher = data
+		case "series":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("series"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Series = data
+		case "genres":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genres"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Genres = data
+		case "tags":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tags = data
+		case "sortBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortBy = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		case "offset":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+			data, err := ec.unmarshalOInt2ᚖint32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Offset = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3387,6 +4140,42 @@ func (ec *executionContext) _Book(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "recommendations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Book_recommendations(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3541,6 +4330,69 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "searchBooks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchBooks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "series":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_series(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "seriesList":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_seriesList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -3549,6 +4401,108 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var searchResultImplementors = []string{"SearchResult"}
+
+func (ec *executionContext) _SearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.SearchResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SearchResult")
+		case "books":
+			out.Values[i] = ec._SearchResult_books(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._SearchResult_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var seriesImplementors = []string{"Series"}
+
+func (ec *executionContext) _Series(ctx context.Context, sel ast.SelectionSet, obj *model.Series) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, seriesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Series")
+		case "id":
+			out.Values[i] = ec._Series_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Series_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._Series_slug(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Series_description(ctx, field, obj)
+		case "books":
+			out.Values[i] = ec._Series_books(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bookCount":
+			out.Values[i] = ec._Series_bookCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4055,9 +5009,98 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v any) (int32, error) {
+	res, err := graphql.UnmarshalInt32(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt32(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNNewBook2bookᚑnexusᚋgraphᚋmodelᚐNewBook(ctx context.Context, v any) (model.NewBook, error) {
 	res, err := ec.unmarshalInputNewBook(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSearchBooksInput2bookᚑnexusᚋgraphᚋmodelᚐSearchBooksInput(ctx context.Context, v any) (model.SearchBooksInput, error) {
+	res, err := ec.unmarshalInputSearchBooksInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSearchResult2bookᚑnexusᚋgraphᚋmodelᚐSearchResult(ctx context.Context, sel ast.SelectionSet, v model.SearchResult) graphql.Marshaler {
+	return ec._SearchResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSearchResult2ᚖbookᚑnexusᚋgraphᚋmodelᚐSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SearchResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSeries2ᚕᚖbookᚑnexusᚋgraphᚋmodelᚐSeriesᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Series) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSeries2ᚖbookᚑnexusᚋgraphᚋmodelᚐSeries(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSeries2ᚖbookᚑnexusᚋgraphᚋmodelᚐSeries(ctx context.Context, sel ast.SelectionSet, v *model.Series) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Series(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -4382,6 +5425,13 @@ func (ec *executionContext) marshalOInt2ᚖint32(ctx context.Context, sel ast.Se
 	_ = ctx
 	res := graphql.MarshalInt32(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOSeries2ᚖbookᚑnexusᚋgraphᚋmodelᚐSeries(ctx context.Context, sel ast.SelectionSet, v *model.Series) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Series(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

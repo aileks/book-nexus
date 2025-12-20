@@ -9,12 +9,32 @@ FROM books
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
--- name: SearchBooksByTitle :many
+-- name: SearchBooks :many
 SELECT *
 FROM books
-WHERE title ILIKE '%' || $1 || '%'
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+WHERE 
+  ($1::text IS NULL OR title ILIKE '%' || $1 || '%')
+  AND ($2::text IS NULL OR author ILIKE '%' || $2 || '%')
+  AND ($3::text IS NULL OR publisher ILIKE '%' || $3 || '%')
+  AND ($4::text IS NULL OR series_name ILIKE '%' || $4 || '%')
+ORDER BY 
+  CASE 
+    WHEN $5 = 'title' THEN title
+    WHEN $5 = 'author' THEN author
+    WHEN $5 = 'published_date' THEN published_date::text
+    WHEN $5 = 'created_at' THEN created_at::text
+  END,
+  created_at DESC
+LIMIT $6 OFFSET $7;
+
+-- name: CountSearchResults :one
+SELECT COUNT(*) as total
+FROM books
+WHERE 
+  ($1::text IS NULL OR title ILIKE '%' || $1 || '%')
+  AND ($2::text IS NULL OR author ILIKE '%' || $2 || '%')
+  AND ($3::text IS NULL OR publisher ILIKE '%' || $3 || '%')
+  AND ($4::text IS NULL OR series_name ILIKE '%' || $4 || '%');
 
 -- name: GetBooksByAuthor :many
 SELECT *
@@ -56,3 +76,20 @@ SELECT DISTINCT author
 FROM books
 WHERE author ILIKE '%' || $1 || '%'
 ORDER BY author;
+
+-- name: ListSeries :many
+SELECT 
+  DISTINCT series_name as name,
+  COUNT(*) as book_count
+FROM books
+WHERE series_name IS NOT NULL
+GROUP BY series_name
+ORDER BY series_name;
+
+-- name: GetSeriesByName :one
+SELECT 
+  series_name as name,
+  COUNT(*) as book_count
+FROM books
+WHERE series_name = $1
+GROUP BY series_name;
