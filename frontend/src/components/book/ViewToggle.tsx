@@ -13,7 +13,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-lg border bg-background p-1",
+        "inline-flex items-center rounded-md border bg-background p-1",
         className,
       )}
     >

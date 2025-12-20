@@ -14,12 +14,6 @@ const GENRES = [
   { label: "Thriller", genre: "Thriller" },
 ];
 
-const EXAMPLE_SEARCHES = [
-  { label: "Stephen King", query: "Stephen King" },
-  { label: "Harry Potter", query: "Harry Potter" },
-  { label: "Brandon Sanderson", query: "Brandon Sanderson" },
-];
-
 function HomePage() {
   const navigate = useNavigate();
 
@@ -63,7 +57,7 @@ function HomePage() {
                 <button
                   key={item.genre}
                   onClick={() => handleGenreClick(item.genre)}
-                  className="px-4 py-2 text-base rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  className="px-4 py-2 text-base rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
                   {item.label}
                 </button>
@@ -71,29 +65,18 @@ function HomePage() {
             </div>
           </div>
 
-          {/* Example searches */}
+          {/* Limited selection notice */}
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Or try searching for:
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {EXAMPLE_SEARCHES.map((example) => (
-                <button
-                  key={example.query}
-                  onClick={() => handleSearch(example.query)}
-                  className="px-4 py-2 text-base rounded-full border border-border hover:bg-card hover:border-primary/50 transition-colors"
-                >
-                  {example.label}
-                </button>
-              ))}
+            <div className="inline-flex items-center gap-2 px-4 py-3 rounded-md bg-muted/50 border border-border">
+              <p className="text-sm text-muted-foreground text-center">
+                <span className="font-medium text-foreground">Note:</span> We
+                currently have a limited selection of books. We're working on
+                adding more in the future!
+              </p>
             </div>
           </div>
         </div>
       </main>
-
-      <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>Search through thousands of books</p>
-      </footer>
     </div>
   );
 }

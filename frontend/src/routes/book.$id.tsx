@@ -93,10 +93,10 @@ function BookDetailPage() {
                 <img
                   src={book.imageUrl}
                   alt={book.title}
-                  className="w-full max-w-xs sm:max-w-sm mx-auto rounded-lg shadow-lg"
+                  className="w-full max-w-xs sm:max-w-sm mx-auto rounded-md shadow-lg"
                 />
               ) : (
-                <div className="w-full max-w-xs sm:max-w-sm mx-auto aspect-[2/3] bg-muted rounded-lg flex items-center justify-center">
+                <div className="w-full max-w-xs sm:max-w-sm mx-auto aspect-[2/3] bg-muted rounded-md flex items-center justify-center">
                   <IconBook className="w-16 h-16 sm:w-24 sm:h-24 text-muted-foreground" />
                 </div>
               )}
@@ -296,10 +296,10 @@ function BookDetailPage() {
                             <img
                               src={rec.imageUrl}
                               alt={rec.title}
-                              className="w-full aspect-[2/3] object-cover rounded-lg shadow group-hover:shadow-lg transition-shadow"
+                              className="w-full aspect-[2/3] object-cover rounded-md shadow group-hover:shadow-lg transition-shadow"
                             />
                           ) : (
-                            <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                            <div className="w-full aspect-[2/3] bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
                               <IconBook className="w-10 h-10 text-muted-foreground" />
                             </div>
                           )}

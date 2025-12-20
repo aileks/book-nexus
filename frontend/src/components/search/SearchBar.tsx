@@ -48,7 +48,7 @@ export function SearchBar({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="pl-10 pr-10 py-6 text-lg"
+        className="pl-10 pr-10 py-6 text-lg bg-muted/50"
         aria-label="Search books"
         autoFocus={autoFocus}
       />

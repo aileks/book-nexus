@@ -89,7 +89,7 @@ function SeriesPage() {
         {/* Series Header */}
         <div className="mb-6 sm:mb-10">
           <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
               <IconStack2 className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
             </div>
             <div className="min-w-0">
@@ -120,7 +120,7 @@ function SeriesPage() {
                 key={book.id}
                 to="/book/$id"
                 params={{ id: book.id }}
-                className="flex items-center gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 rounded-lg border hover:bg-muted/50 transition-colors group"
+                className="flex items-center gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 rounded-md border hover:bg-muted/50 transition-colors group"
               >
                 {/* Position Badge */}
                 <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center">

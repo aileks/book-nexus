@@ -126,10 +126,10 @@ function AuthorPage() {
                   <img
                     src={book.imageUrl}
                     alt={book.title}
-                    className="w-full aspect-[2/3] object-cover rounded-lg shadow group-hover:shadow-lg transition-shadow"
+                    className="w-full aspect-[2/3] object-cover rounded-md shadow group-hover:shadow-lg transition-shadow"
                   />
                 ) : (
-                  <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                  <div className="w-full aspect-[2/3] bg-muted rounded-md flex items-center justify-center group-hover:bg-muted/80 transition-colors">
                     <IconBook className="w-12 h-12 text-muted-foreground" />
                   </div>
                 )}
