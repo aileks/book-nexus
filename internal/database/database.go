@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"book-nexus/internal/database/sqlc"
@@ -28,26 +29,53 @@ type service struct {
 
 var dbInstance *service
 
-func New() Service {
-	if dbInstance != nil {
-		return dbInstance
-	}
-
+func getConnectionString() string {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("FATAL: DATABASE_URL is not set")
 	}
 
-	// Add search_path if provided
-	if schema := os.Getenv("DATABASE_SCHEMA"); schema != "" {
-		dbURL = fmt.Sprintf("%s?search_path=%s", dbURL, schema)
+	// Production: Use URL exactly as provided
+	if os.Getenv("APP_ENV") == "production" {
+		log.Println("Production mode: Using DATABASE_URL without modification")
+		return dbURL
 	}
 
-	db, err := pgxpool.New(context.Background(), dbURL)
+	// Development: Add search_path if schema provided
+	if schema := os.Getenv("DATABASE_SCHEMA"); schema != "" {
+		separator := "?"
+		if strings.Contains(dbURL, "?") {
+			separator = "&"
+		}
+		dbURL = fmt.Sprintf("%s%ssearch_path=%s", dbURL, separator, schema)
+		log.Printf("Development mode: Added search_path=%s", schema)
+	}
+
+	return dbURL
+}
+
+func New() Service {
+	if dbInstance != nil {
+		return dbInstance
+	}
+
+	connStr := getConnectionString()
+	log.Printf("Attempting to connect to database...")
+
+	db, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		log.Fatalf("FATAL: Failed to create connection pool: %v", err)
 	}
 
+	// Verify connection
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := db.Ping(ctx); err != nil {
+		log.Fatalf("FATAL: Database ping failed: %v", err)
+	}
+
+	log.Println("Database connected successfully")
 	dbInstance = &service{
 		db:      db,
 		queries: sqlc.New(db),
