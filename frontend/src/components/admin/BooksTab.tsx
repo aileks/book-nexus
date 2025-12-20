@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,11 +42,19 @@ export function BooksTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
+  const prevSearchQueryRef = useRef<string>("");
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1);
   };
+
+  // Reset to page 1 only when search query actually changes
+  useEffect(() => {
+    if (prevSearchQueryRef.current !== searchQuery) {
+      prevSearchQueryRef.current = searchQuery;
+      setCurrentPage(1);
+    }
+  }, [searchQuery]);
 
   const totalPages = Math.ceil((books?.length || 0) / ITEMS_PER_PAGE);
   const paginatedBooks = books?.slice(
@@ -218,7 +226,11 @@ export function BooksTab() {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Select an author">
+                    {formData.authorId
+                      ? authors?.find((a) => a.id === formData.authorId)?.name
+                      : ""}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {authors?.map((a) => (
@@ -241,7 +253,13 @@ export function BooksTab() {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Select a series">
+                    {formData.seriesId && formData.seriesId !== "none"
+                      ? seriesList?.find((s) => s.id === formData.seriesId)?.name
+                      : formData.seriesId === "none" || !formData.seriesId
+                        ? "No series"
+                        : ""}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No series</SelectItem>

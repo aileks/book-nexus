@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,11 +37,19 @@ export function SeriesTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [seriesToDelete, setSeriesToDelete] = useState<Series | null>(null);
+  const prevSearchQueryRef = useRef<string>("");
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1);
   };
+
+  // Reset to page 1 only when search query actually changes
+  useEffect(() => {
+    if (prevSearchQueryRef.current !== searchQuery) {
+      prevSearchQueryRef.current = searchQuery;
+      setCurrentPage(1);
+    }
+  }, [searchQuery]);
 
   const totalPages = Math.ceil((seriesList?.length || 0) / ITEMS_PER_PAGE);
   const paginatedSeries = seriesList?.slice(
