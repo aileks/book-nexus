@@ -1,8 +1,11 @@
-import { createClient, cacheExchange, fetchExchange } from "urql";
+import { GraphQLClient } from 'graphql-request';
 
-const client = createClient({
-  url: "/query",
-  exchanges: [cacheExchange, fetchExchange],
+const endpoint = '/query';
+
+export const graphqlClient = new GraphQLClient(endpoint, {
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-export { client };
+export default graphqlClient;
