@@ -42,16 +42,13 @@ export function SearchPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <section className="text-center py-12">
-          <h2 className="text-4xl font-bold tracking-tight mb-4">
+      <main className="container mx-auto px-4 py-12">
+        <section className="text-center py-16">
+          <h1 className="text-5xl font-bold tracking-tight mb-12">
             Discover Your Next Book
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Search through our collection of books by title, author, series, or keywords
-          </p>
+          </h1>
           
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center">
             <SearchBar onSearch={handleSearch} />
           </div>
         </section>
