@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "urql";
-import { SearchBar } from "@/components/search";
+import { ControlledSearchBar } from "@/components/search/SearchBar";
 import {
   BookCard,
   BookListItem,
@@ -54,10 +54,11 @@ function SearchResultsPage() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="max-w-3xl mx-auto">
-            <SearchBar
-              onSearch={handleSearch}
+            <ControlledSearchBar
+              value={q}
+              onChange={() => {}}
+              onSubmit={handleSearch}
               placeholder="Search books, authors, series..."
-              defaultValue={q}
               autoFocus
             />
           </div>
