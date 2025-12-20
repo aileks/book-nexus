@@ -1,7 +1,15 @@
 import { GraphQLClient, ClientError } from "graphql-request";
 
-// Use full URL for graphql-request compatibility
-const endpoint = `${window.location.origin}/query`;
+// Get API endpoint from environment variable or use same origin
+const getApiUrl = (): string => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  return `${window.location.origin}/query`;
+};
+
+const endpoint = getApiUrl();
 
 export const graphqlClient = new GraphQLClient(endpoint, {
   headers: {

@@ -1,8 +1,6 @@
 data/
 node_modules/
 dist/
-*.md
-!README.md
 .env
 .settings/
 .vscode/
