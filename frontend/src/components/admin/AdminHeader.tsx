@@ -16,10 +16,14 @@ export function AdminHeader({ onLogout }: AdminHeaderProps) {
       <h1 className="text-base sm:text-lg font-bold truncate">
         Book Nexus Admin
       </h1>
-      <Button variant="outline" onClick={handleLogout} size="sm" className="flex-shrink-0">
+      <Button
+        variant="outline"
+        onClick={handleLogout}
+        size="sm"
+        className="flex-shrink-0"
+      >
         Logout
       </Button>
     </header>
   );
 }
-

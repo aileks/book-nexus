@@ -296,4 +296,3 @@ export function AuthorsTab() {
     </div>
   );
 }
-

@@ -273,18 +273,18 @@ function BookDetailPage() {
                 new Map(
                   book.recommendations
                     .filter((rec) => rec.id !== book.id)
-                    .map((rec) => [rec.id, rec])
-                ).values()
+                    .map((rec) => [rec.id, rec]),
+                ).values(),
               );
 
               return uniqueRecommendations.length > 0 ? (
                 <>
                   <Separator />
-                <div>
-                  <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
-                    You might also like
-                  </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+                      You might also like
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                       {uniqueRecommendations.map((rec) => (
                         <Link
                           key={rec.id}

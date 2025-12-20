@@ -31,7 +31,10 @@ export function SearchFilters({
 
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {authorName && (
-          <Badge variant="secondary" className="text-sm sm:text-base px-2 sm:px-3 py-1 gap-1 sm:gap-2">
+          <Badge
+            variant="secondary"
+            className="text-sm sm:text-base px-2 sm:px-3 py-1 gap-1 sm:gap-2"
+          >
             <span className="hidden sm:inline">Author: </span>
             <span>{authorName}</span>
             {onAuthorClear && (
@@ -47,7 +50,10 @@ export function SearchFilters({
         )}
 
         {seriesName && (
-          <Badge variant="secondary" className="text-sm sm:text-base px-2 sm:px-3 py-1 gap-1 sm:gap-2">
+          <Badge
+            variant="secondary"
+            className="text-sm sm:text-base px-2 sm:px-3 py-1 gap-1 sm:gap-2"
+          >
             <span className="hidden sm:inline">Series: </span>
             <span>{seriesName}</span>
             {onSeriesClear && (

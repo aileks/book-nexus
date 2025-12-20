@@ -296,4 +296,3 @@ export function SeriesTab() {
     </div>
   );
 }
-
