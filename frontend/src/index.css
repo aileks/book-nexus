@@ -121,7 +121,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply font-sans text-foreground;
+    @apply font-sans text-foreground bg-amber-50;
   }
   html {
     @apply font-sans;
