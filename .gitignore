@@ -1,6 +1,9 @@
 data/
 node_modules/
 dist/
+*.md
+!README.md
+!PRD.md
 .env
 .settings/
 .vscode/
@@ -17,4 +20,3 @@ tmp/
 main
 *templ.go
 .DS_Store
-# vendor/
