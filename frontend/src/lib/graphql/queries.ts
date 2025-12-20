@@ -233,6 +233,8 @@ export function useBook(id: string) {
       return data.book;
     },
     enabled: !!id,
+    staleTime: 1000 * 60 * 10, // 10 minutes - book details don't change often
+    gcTime: 1000 * 60 * 60, // 1 hour - keep book data in cache longer
   });
 }
 
