@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 
 interface ErrorDisplayProps {
   title?: string;
@@ -21,9 +22,12 @@ export function ErrorDisplay({
       <div className="flex gap-2">
         {onRetry && <Button onClick={onRetry}>Try Again</Button>}
         {showHomeLink && (
-          <Button variant="outline" asChild>
-            <Link to="/">Go Home</Link>
-          </Button>
+          <Link
+            to="/"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            Go Home
+          </Link>
         )}
       </div>
     </div>
@@ -38,9 +42,12 @@ export function NotFoundError() {
       <p className="text-muted-foreground mb-6">
         The page you're looking for doesn't exist or has been moved.
       </p>
-      <Button asChild>
-        <Link to="/">Go Home</Link>
-      </Button>
+      <Link
+        to="/"
+        className={cn(buttonVariants())}
+      >
+        Go Home
+      </Link>
     </div>
   );
 }
