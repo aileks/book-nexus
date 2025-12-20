@@ -5,11 +5,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getErrorMessage, ApiError } from "@/lib/graphql/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  IconUser,
-  IconBook,
-  IconStack2,
-} from "@tabler/icons-react";
+import { IconUser, IconBook, IconStack2 } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/author/$slug")({
   component: () => (
@@ -35,14 +31,14 @@ function AuthorPage() {
     const isNotFound = error instanceof ApiError && error.isNotFound;
     return (
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-10">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
           <BackToSearch />
-          <Card className="p-16 text-center">
-            <IconUser className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
-            <h3 className="text-2xl font-semibold mb-3">
+          <Card className="p-8 sm:p-16 text-center">
+            <IconUser className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 text-muted-foreground" />
+            <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">
               {isNotFound ? "Author not found" : "Error loading author"}
             </h3>
-            <p className="text-muted-foreground text-lg mb-4">
+            <p className="text-muted-foreground text-base sm:text-lg mb-4 break-words">
               {getErrorMessage(error)}
             </p>
             {!isNotFound && (
@@ -57,12 +53,14 @@ function AuthorPage() {
   if (!author) {
     return (
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-10">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
           <BackToSearch />
-          <Card className="p-16 text-center">
-            <IconUser className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
-            <h3 className="text-2xl font-semibold mb-3">Author not found</h3>
-            <p className="text-muted-foreground text-lg">
+          <Card className="p-8 sm:p-16 text-center">
+            <IconUser className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 text-muted-foreground" />
+            <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">
+              Author not found
+            </h3>
+            <p className="text-muted-foreground text-base sm:text-lg">
               The requested author could not be found.
             </p>
           </Card>
@@ -86,24 +84,26 @@ function AuthorPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
         <BackToSearch />
 
         {/* Author Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
-              <IconUser className="w-10 h-10 text-muted-foreground" />
+        <div className="mb-6 sm:mb-10">
+          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+              <IconUser className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
             </div>
-            <div>
-              <h1 className="text-4xl font-bold">{author.name}</h1>
-              <p className="text-xl text-muted-foreground">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold break-words">
+                {author.name}
+              </h1>
+              <p className="text-base sm:text-xl text-muted-foreground">
                 {author.bookCount} {author.bookCount === 1 ? "book" : "books"}
               </p>
             </div>
           </div>
           {author.bio && (
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-3xl break-words">
               {author.bio}
             </p>
           )}
@@ -111,8 +111,8 @@ function AuthorPage() {
 
         {/* Books */}
         <div>
-          <h2 className="text-2xl font-semibold mb-6">Books</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Books</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
             {sortedBooks.map((book) => (
               <Link
                 key={book.id}

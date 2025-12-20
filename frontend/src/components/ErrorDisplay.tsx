@@ -19,9 +19,7 @@ export function ErrorDisplay({
       <h2 className="text-lg font-semibold mb-2">{title}</h2>
       <p className="text-muted-foreground mb-4 max-w-md">{message}</p>
       <div className="flex gap-2">
-        {onRetry && (
-          <Button onClick={onRetry}>Try Again</Button>
-        )}
+        {onRetry && <Button onClick={onRetry}>Try Again</Button>}
         {showHomeLink && (
           <Button variant="outline" asChild>
             <Link to="/">Go Home</Link>

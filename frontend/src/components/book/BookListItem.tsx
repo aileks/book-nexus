@@ -9,33 +9,35 @@ type BookListItemProps = {
 
 export function BookListItem({ book, onClick }: BookListItemProps) {
   const content = (
-    <div className="flex items-center gap-4 p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors">
+    <div className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors">
       {book.imageUrl ? (
         <img
           src={book.imageUrl}
           alt={book.title}
-          className="w-16 h-20 object-cover rounded bg-muted flex-shrink-0"
+          className="w-12 h-16 sm:w-16 sm:h-20 object-cover rounded bg-muted flex-shrink-0"
         />
       ) : (
-        <div className="w-16 h-20 rounded bg-muted flex items-center justify-center flex-shrink-0">
-          <IconBook className="w-8 h-8 text-muted-foreground" />
+        <div className="w-12 h-16 sm:w-16 sm:h-20 rounded bg-muted flex items-center justify-center flex-shrink-0">
+          <IconBook className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
         </div>
       )}
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-lg line-clamp-1">{book.title}</h3>
+        <h3 className="font-semibold text-base sm:text-lg line-clamp-2 sm:line-clamp-1">
+          {book.title}
+        </h3>
         {book.subtitle && (
-          <p className="text-base text-muted-foreground line-clamp-1">
+          <p className="text-sm sm:text-base text-muted-foreground line-clamp-1">
             {book.subtitle}
           </p>
         )}
-        <div className="flex items-center gap-2 text-base text-muted-foreground mt-1">
-          <IconUser className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-sm sm:text-base text-muted-foreground mt-1">
+          <IconUser className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
           <span className="line-clamp-1">{book.author.name}</span>
         </div>
 
         {(book.publisher || book.series) && (
-          <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs sm:text-sm text-muted-foreground">
             {book.publisher && <span>{book.publisher.name}</span>}
             {book.series && (
               <SeriesBadge
@@ -54,7 +56,7 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
               .map((tag) => (
                 <span
                   key={tag}
-                  className="text-sm bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
+                  className="text-xs sm:text-sm bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
                 >
                   {tag.trim()}
                 </span>
@@ -63,7 +65,7 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
         )}
       </div>
 
-      <IconChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+      <IconChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
     </div>
   );
 

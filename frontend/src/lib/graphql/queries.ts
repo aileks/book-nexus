@@ -1,6 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { requestWithError } from './client';
-import type { Book, Author, Series, SearchBooksInput, SearchResult } from './types';
+import { useQuery } from "@tanstack/react-query";
+import { requestWithError } from "./client";
+import type {
+  Book,
+  Author,
+  Series,
+  SearchBooksInput,
+  SearchResult,
+} from "./types";
 
 // Fragment for book list items (used in search results)
 const BOOK_LIST_FRAGMENT = `
@@ -204,11 +210,11 @@ export function useSearchBooks(input: SearchBooksInput) {
   const hasSearchCriteria = !!(input.query || input.genre);
 
   return useQuery({
-    queryKey: ['searchBooks', input],
+    queryKey: ["searchBooks", input],
     queryFn: async () => {
       const data = await requestWithError<{ searchBooks: SearchResult }>(
         SEARCH_BOOKS_QUERY,
-        { input }
+        { input },
       );
       return data.searchBooks;
     },
@@ -218,11 +224,11 @@ export function useSearchBooks(input: SearchBooksInput) {
 
 export function useBook(id: string) {
   return useQuery({
-    queryKey: ['book', id],
+    queryKey: ["book", id],
     queryFn: async () => {
       const data = await requestWithError<{ book: Book | null }>(
         GET_BOOK_QUERY,
-        { id }
+        { id },
       );
       return data.book;
     },
@@ -232,11 +238,11 @@ export function useBook(id: string) {
 
 export function useAuthor(id: string) {
   return useQuery({
-    queryKey: ['author', id],
+    queryKey: ["author", id],
     queryFn: async () => {
       const data = await requestWithError<{ author: Author | null }>(
         GET_AUTHOR_QUERY,
-        { id }
+        { id },
       );
       return data.author;
     },
@@ -246,11 +252,11 @@ export function useAuthor(id: string) {
 
 export function useAuthorBySlug(slug: string) {
   return useQuery({
-    queryKey: ['authorBySlug', slug],
+    queryKey: ["authorBySlug", slug],
     queryFn: async () => {
       const data = await requestWithError<{ authorBySlug: Author | null }>(
         GET_AUTHOR_BY_SLUG_QUERY,
-        { slug }
+        { slug },
       );
       return data.authorBySlug;
     },
@@ -260,11 +266,11 @@ export function useAuthorBySlug(slug: string) {
 
 export function useSeries(id: string) {
   return useQuery({
-    queryKey: ['series', id],
+    queryKey: ["series", id],
     queryFn: async () => {
       const data = await requestWithError<{ series: Series | null }>(
         GET_SERIES_QUERY,
-        { id }
+        { id },
       );
       return data.series;
     },
@@ -274,11 +280,11 @@ export function useSeries(id: string) {
 
 export function useSeriesBySlug(slug: string) {
   return useQuery({
-    queryKey: ['seriesBySlug', slug],
+    queryKey: ["seriesBySlug", slug],
     queryFn: async () => {
       const data = await requestWithError<{ seriesBySlug: Series | null }>(
         GET_SERIES_BY_SLUG_QUERY,
-        { slug }
+        { slug },
       );
       return data.seriesBySlug;
     },

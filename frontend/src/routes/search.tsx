@@ -1,6 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ControlledSearchBar } from "@/components/search/SearchBar";
-import { BookCard, BookListItem, ViewToggle, type ViewMode } from "@/components/book";
+import {
+  BookCard,
+  BookListItem,
+  ViewToggle,
+  type ViewMode,
+} from "@/components/book";
 import { Pagination } from "@/components/search/Pagination";
 import { useSearchBooks } from "@/lib/graphql/queries";
 import { saveLastSearch } from "@/lib/useLastSearch";
@@ -12,21 +17,15 @@ import { useState, useEffect } from "react";
 
 const ITEMS_PER_PAGE = 20;
 
-const GENRES = [
-  "Fantasy",
-  "Horror",
-  "Mystery",
-  "Suspense",
-  "Thriller",
-];
+const GENRES = ["Fantasy", "Horror", "Mystery", "Suspense", "Thriller"];
 
-const SORT_OPTIONS: { value: SortOption | ''; label: string }[] = [
-  { value: '', label: 'Relevance' },
-  { value: 'title_asc', label: 'Title (A-Z)' },
-  { value: 'title_desc', label: 'Title (Z-A)' },
-  { value: 'date_desc', label: 'Newest First' },
-  { value: 'date_asc', label: 'Oldest First' },
-  { value: 'author', label: 'Author' },
+const SORT_OPTIONS: { value: SortOption | ""; label: string }[] = [
+  { value: "", label: "Relevance" },
+  { value: "title_asc", label: "Title (A-Z)" },
+  { value: "title_desc", label: "Title (Z-A)" },
+  { value: "date_desc", label: "Newest First" },
+  { value: "date_asc", label: "Oldest First" },
+  { value: "author", label: "Author" },
 ];
 
 export const Route = createFileRoute("/search")({
@@ -36,7 +35,7 @@ export const Route = createFileRoute("/search")({
       q: (search.q as string) || "",
       page: Number(search.page) || 1,
       genre: (search.genre as string) || "",
-      sort: (search.sort as SortOption | '') || "",
+      sort: (search.sort as SortOption | "") || "",
     };
   },
 });
@@ -44,17 +43,15 @@ export const Route = createFileRoute("/search")({
 function SearchResultsPage() {
   const { q, page, genre, sort } = Route.useSearch();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState(q);
 
   const offset = (page - 1) * ITEMS_PER_PAGE;
 
-  // Save the search query for "Back to search" links
+  // Save the search parameters for "Back to search" links
   useEffect(() => {
-    if (q) {
-      saveLastSearch(q);
-    }
-  }, [q]);
+    saveLastSearch({ q, page, genre, sort });
+  }, [q, page, genre, sort]);
 
   const { data, isLoading, error } = useSearchBooks({
     query: q || undefined,
@@ -70,7 +67,10 @@ function SearchResultsPage() {
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      navigate({ to: "/search", search: { q: query.trim(), page: 1, genre, sort } });
+      navigate({
+        to: "/search",
+        search: { q: query.trim(), page: 1, genre, sort },
+      });
     } else {
       navigate({ to: "/" });
     }
@@ -85,7 +85,7 @@ function SearchResultsPage() {
     navigate({ to: "/search", search: { q, page: 1, genre: newGenre, sort } });
   };
 
-  const handleSortChange = (newSort: SortOption | '') => {
+  const handleSortChange = (newSort: SortOption | "") => {
     navigate({ to: "/search", search: { q, page: 1, genre, sort: newSort } });
   };
 
@@ -97,8 +97,8 @@ function SearchResultsPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-5">
+      <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/70 sticky top-0 z-50">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-5">
           <div className="max-w-3xl mx-auto">
             <ControlledSearchBar
               value={searchQuery}
@@ -111,7 +111,7 @@ function SearchResultsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-10">
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-10">
         {isLoading && (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -119,25 +119,31 @@ function SearchResultsPage() {
         )}
 
         {error && (
-          <Card className="p-8 text-center">
-            <IconSearch className="w-14 h-14 mx-auto mb-4 text-destructive" />
-            <h3 className="text-xl font-semibold mb-2">Search Error</h3>
-            <p className="text-muted-foreground text-lg">{(error as Error).message}</p>
+          <Card className="p-6 sm:p-8 text-center">
+            <IconSearch className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-4 text-destructive" />
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">
+              Search Error
+            </h3>
+            <p className="text-muted-foreground text-base sm:text-lg">
+              {(error as Error).message}
+            </p>
           </Card>
         )}
 
         {books.length > 0 && (
           <section>
-            <div className="flex flex-col gap-4 mb-8">
-              <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <h3 className="text-2xl font-semibold">
+                  <h3 className="text-xl sm:text-2xl font-semibold wrap-break-word">
                     {total} {total === 1 ? "book" : "books"} found
-                    {q && ` for "${q}"`}
-                    {genre && ` in ${genre}`}
+                    {q && <span className="block sm:inline"> for "{q}"</span>}
+                    {genre && (
+                      <span className="block sm:inline"> in {genre}</span>
+                    )}
                   </h3>
                   {totalPages > 1 && (
-                    <p className="text-muted-foreground mt-1">
+                    <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                       Page {page} of {totalPages}
                     </p>
                   )}
@@ -145,8 +151,8 @@ function SearchResultsPage() {
               </div>
 
               {/* Filter and view controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   {/* Genre filter */}
                   <select
                     value={genre}
@@ -155,18 +161,24 @@ function SearchResultsPage() {
                   >
                     <option value="">All Genres</option>
                     {GENRES.map((g) => (
-                      <option key={g} value={g}>{g}</option>
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
                     ))}
                   </select>
 
                   {/* Sort filter */}
                   <select
                     value={sort}
-                    onChange={(e) => handleSortChange(e.target.value as SortOption | '')}
+                    onChange={(e) =>
+                      handleSortChange(e.target.value as SortOption | "")
+                    }
                     className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     {SORT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
                     ))}
                   </select>
 
@@ -189,7 +201,7 @@ function SearchResultsPage() {
             </div>
 
             {viewMode === "cards" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
                 {books.map((book: Book) => (
                   <BookCard key={book.id} book={book} />
                 ))}
@@ -211,20 +223,24 @@ function SearchResultsPage() {
         )}
 
         {!isLoading && !error && books.length === 0 && (q || genre) && (
-          <Card className="p-16 text-center">
-            <IconSearch className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
-            <h3 className="text-2xl font-semibold mb-3">No books found</h3>
-            <p className="text-muted-foreground text-lg">
+          <Card className="p-8 sm:p-16 text-center">
+            <IconSearch className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 text-muted-foreground" />
+            <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">
+              No books found
+            </h3>
+            <p className="text-muted-foreground text-base sm:text-lg">
               Try a different search term{genre && " or genre"}
             </p>
           </Card>
         )}
 
         {!q && !genre && (
-          <Card className="p-16 text-center">
-            <IconBook className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
-            <h3 className="text-2xl font-semibold mb-3">Start Searching</h3>
-            <p className="text-muted-foreground text-lg">
+          <Card className="p-8 sm:p-16 text-center">
+            <IconBook className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 text-muted-foreground" />
+            <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">
+              Start Searching
+            </h3>
+            <p className="text-muted-foreground text-base sm:text-lg">
               Enter a search term above to discover books
             </p>
           </Card>

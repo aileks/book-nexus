@@ -25,7 +25,10 @@ function HomePage() {
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      navigate({ to: "/search", search: { q: query.trim(), page: 1, genre: "", sort: "" } });
+      navigate({
+        to: "/search",
+        search: { q: query.trim(), page: 1, genre: "", sort: "" },
+      });
     }
   };
 
@@ -35,18 +38,20 @@ function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 flex items-center justify-center px-4">
+      <main className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-2xl text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <IconBook className="w-12 h-12 text-primary" />
-            <h1 className="text-5xl font-bold tracking-tight">Book Nexus</h1>
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <IconBook className="w-8 h-8 sm:w-12 sm:h-12 text-primary" />
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+              Book Nexus
+            </h1>
           </div>
 
-          <p className="text-xl text-muted-foreground mb-10">
+          <p className="text-lg sm:text-xl text-muted-foreground mb-6 sm:mb-10">
             Discover your next favorite book
           </p>
 
-          <div className="mb-10">
+          <div className="mb-6 sm:mb-10">
             <SearchBar onSearch={handleSearch} />
           </div>
 
@@ -68,7 +73,9 @@ function HomePage() {
 
           {/* Example searches */}
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Or try searching for:</p>
+            <p className="text-sm text-muted-foreground">
+              Or try searching for:
+            </p>
             <div className="flex flex-wrap justify-center gap-2">
               {EXAMPLE_SEARCHES.map((example) => (
                 <button

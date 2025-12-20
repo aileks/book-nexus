@@ -61,7 +61,12 @@ export type Book = {
 };
 
 // Sort options for search
-export type SortOption = 'title_asc' | 'title_desc' | 'date_asc' | 'date_desc' | 'author';
+export type SortOption =
+  | "title_asc"
+  | "title_desc"
+  | "date_asc"
+  | "date_desc"
+  | "author";
 
 // Search input type
 export type SearchBooksInput = {

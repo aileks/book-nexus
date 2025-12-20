@@ -7,7 +7,11 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
 };
 
-export function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+export function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: PaginationProps) {
   if (totalPages <= 1) {
     return null;
   }
@@ -15,20 +19,24 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
   const pages = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-10">
+    <div className="flex items-center justify-center gap-1 sm:gap-2 mt-6 sm:mt-10 flex-wrap">
       <Button
         variant="outline"
         size="icon"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        className="h-8 w-8 sm:h-9 sm:w-9"
       >
-        <IconChevronLeft className="w-5 h-5" />
+        <IconChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
       </Button>
 
       {pages.map((page, index) => {
         if (page === "...") {
           return (
-            <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
+            <span
+              key={`ellipsis-${index}`}
+              className="px-1 sm:px-2 text-muted-foreground text-sm sm:text-base"
+            >
               ...
             </span>
           );
@@ -39,7 +47,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             key={page}
             variant={page === currentPage ? "default" : "outline"}
             onClick={() => onPageChange(page as number)}
-            className="min-w-10"
+            className="min-w-8 sm:min-w-10 h-8 sm:h-9 text-sm sm:text-base"
           >
             {page}
           </Button>
@@ -51,8 +59,9 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
         size="icon"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        className="h-8 w-8 sm:h-9 sm:w-9"
       >
-        <IconChevronRight className="w-5 h-5" />
+        <IconChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
       </Button>
     </div>
   );
