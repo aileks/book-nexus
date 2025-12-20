@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { InlineError } from "@/components/ErrorDisplay";
 import { Pagination } from "@/components/search/Pagination";
+import { SearchBar } from "@/components/search/SearchBar";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { getErrorMessage } from "@/lib/graphql/client";
 import {
@@ -18,7 +19,8 @@ import type { Author, NewAuthor } from "@/lib/graphql/types";
 import { ITEMS_PER_PAGE } from "./constants";
 
 export function AuthorsTab() {
-  const { data: authors, isLoading, error, refetch } = useAdminAuthors();
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: authors, isLoading, error, refetch } = useAdminAuthors(searchQuery);
   const createAuthor = useCreateAuthor();
   const updateAuthor = useUpdateAuthor();
   const deleteAuthor = useDeleteAuthor();
@@ -30,6 +32,11 @@ export function AuthorsTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [authorToDelete, setAuthorToDelete] = useState<Author | null>(null);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   const totalPages = Math.ceil((authors?.length || 0) / ITEMS_PER_PAGE);
   const paginatedAuthors = authors?.slice(
@@ -122,7 +129,7 @@ export function AuthorsTab() {
     return (
       <Card className="p-6">
         <InlineError
-          message="Error loading authors. Check your admin password."
+          message={getErrorMessage(error) || "Error loading authors. Check your admin password."}
           onRetry={() => refetch()}
         />
       </Card>
@@ -138,6 +145,14 @@ export function AuthorsTab() {
         <Button onClick={startCreate} size="sm" className="w-full sm:w-auto">
           Add Author
         </Button>
+      </div>
+
+      <div className="w-full max-w-md">
+        <SearchBar
+          onSearch={handleSearch}
+          placeholder="Search authors by name..."
+          debounceMs={300}
+        />
       </div>
 
       {mutationError && (

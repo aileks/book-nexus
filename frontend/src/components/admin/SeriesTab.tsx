@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { InlineError } from "@/components/ErrorDisplay";
 import { Pagination } from "@/components/search/Pagination";
+import { SearchBar } from "@/components/search/SearchBar";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { getErrorMessage } from "@/lib/graphql/client";
 import {
@@ -18,7 +19,8 @@ import type { Series, NewSeries } from "@/lib/graphql/types";
 import { ITEMS_PER_PAGE } from "./constants";
 
 export function SeriesTab() {
-  const { data: seriesList, isLoading, error, refetch } = useAdminSeries();
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: seriesList, isLoading, error, refetch } = useAdminSeries(searchQuery);
   const createSeries = useCreateSeries();
   const updateSeries = useUpdateSeries();
   const deleteSeries = useDeleteSeries();
@@ -30,6 +32,11 @@ export function SeriesTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [seriesToDelete, setSeriesToDelete] = useState<Series | null>(null);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   const totalPages = Math.ceil((seriesList?.length || 0) / ITEMS_PER_PAGE);
   const paginatedSeries = seriesList?.slice(
@@ -122,7 +129,7 @@ export function SeriesTab() {
     return (
       <Card className="p-6">
         <InlineError
-          message="Error loading series. Check your admin password."
+          message={getErrorMessage(error) || "Error loading series. Check your admin password."}
           onRetry={() => refetch()}
         />
       </Card>
@@ -138,6 +145,14 @@ export function SeriesTab() {
         <Button onClick={startCreate} size="sm" className="w-full sm:w-auto">
           Add Series
         </Button>
+      </div>
+
+      <div className="w-full max-w-md">
+        <SearchBar
+          onSearch={handleSearch}
+          placeholder="Search series by name..."
+          debounceMs={300}
+        />
       </div>
 
       {mutationError && (

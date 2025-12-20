@@ -43,7 +43,7 @@ export class ApiError extends Error {
 }
 
 // Parse GraphQL errors into a user-friendly message
-function parseGraphQLError(error: unknown): ApiError {
+export function parseGraphQLError(error: unknown): ApiError {
   // Network errors
   if (error instanceof TypeError && error.message.includes("fetch")) {
     return new ApiError(

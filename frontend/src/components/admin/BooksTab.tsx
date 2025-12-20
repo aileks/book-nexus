@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { InlineError } from "@/components/ErrorDisplay";
 import { Pagination } from "@/components/search/Pagination";
+import { SearchBar } from "@/components/search/SearchBar";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { getErrorMessage } from "@/lib/graphql/client";
 import {
@@ -26,7 +27,8 @@ import type { Book, NewBook } from "@/lib/graphql/types";
 import { ITEMS_PER_PAGE } from "./constants";
 
 export function BooksTab() {
-  const { data: books, isLoading, error, refetch } = useAdminBooks();
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: books, isLoading, error, refetch } = useAdminBooks(searchQuery);
   const { data: authors } = useAdminAuthors();
   const { data: seriesList } = useAdminSeries();
   const createBook = useCreateBook();
@@ -40,6 +42,11 @@ export function BooksTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   const totalPages = Math.ceil((books?.length || 0) / ITEMS_PER_PAGE);
   const paginatedBooks = books?.slice(
@@ -136,7 +143,10 @@ export function BooksTab() {
     return (
       <Card className="p-6">
         <InlineError
-          message="Error loading books. Check your admin password."
+          message={
+            getErrorMessage(error) ||
+            "Error loading books. Check your admin password."
+          }
           onRetry={() => refetch()}
         />
       </Card>
@@ -152,6 +162,14 @@ export function BooksTab() {
         <Button onClick={startCreate} size="sm" className="w-full sm:w-auto">
           Add Book
         </Button>
+      </div>
+
+      <div className="w-full max-w-md">
+        <SearchBar
+          onSearch={handleSearch}
+          placeholder="Search books by title, author..."
+          debounceMs={300}
+        />
       </div>
 
       {mutationError && (

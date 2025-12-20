@@ -10,9 +10,20 @@ import type {
   UpdateAuthor,
   NewSeries,
   UpdateSeries,
+  SearchResult,
 } from "./types";
+import { parseGraphQLError } from "./client";
 
-const endpoint = `${window.location.origin}/query`;
+// Get API endpoint from environment variable or use same origin
+const getApiUrl = (): string => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  return `${window.location.origin}/query`;
+};
+
+const endpoint = getApiUrl();
 
 // Admin password stored in session storage
 const ADMIN_PASSWORD_KEY = "adminPassword";
@@ -42,8 +53,13 @@ async function adminRequest<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const client = createAdminClient();
-  return client.request<T>(query, variables);
+  try {
+    const client = createAdminClient();
+    return await client.request<T>(query, variables);
+  } catch (error) {
+    console.error("Admin GraphQL request failed:", error);
+    throw parseGraphQLError(error);
+  }
 }
 
 // Queries for listing entities
@@ -88,6 +104,30 @@ const LIST_BOOKS_QUERY = `
       seriesPosition
       publishedDate
       imageUrl
+    }
+  }
+`;
+
+const SEARCH_BOOKS_QUERY = `
+  query SearchBooks($input: SearchBooksInput!) {
+    searchBooks(input: $input) {
+      books {
+        id
+        title
+        subtitle
+        author {
+          id
+          name
+        }
+        series {
+          id
+          name
+        }
+        seriesPosition
+        publishedDate
+        imageUrl
+      }
+      total
     }
   }
 `;
@@ -200,15 +240,29 @@ export function useAdminSeries(search?: string) {
   });
 }
 
-export function useAdminBooks() {
+export function useAdminBooks(search?: string) {
   return useQuery({
-    queryKey: ["admin", "books"],
+    queryKey: ["admin", "books", search],
     queryFn: async () => {
-      const data = await adminRequest<{ books: Book[] }>(LIST_BOOKS_QUERY, {
-        limit: 100,
-        offset: 0,
-      });
-      return data.books;
+      if (search && search.trim()) {
+        const data = await adminRequest<{ searchBooks: SearchResult }>(
+          SEARCH_BOOKS_QUERY,
+          {
+            input: {
+              query: search.trim(),
+              limit: 1000,
+              offset: 0,
+            },
+          },
+        );
+        return data.searchBooks.books;
+      } else {
+        const data = await adminRequest<{ books: Book[] }>(LIST_BOOKS_QUERY, {
+          limit: 1000,
+          offset: 0,
+        });
+        return data.books;
+      }
     },
   });
 }
