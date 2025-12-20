@@ -194,10 +194,17 @@ func SeedBooks(pool *pgxpool.Pool, csvPath string) error {
 		isbn10 := strings.TrimSpace(row[colMap["isbn10"]])
 		isbn13 := strings.TrimSpace(row[colMap["isbn13"]])
 		pagesStr := strings.TrimSpace(row[colMap["pages"]])
+
 		language := strings.TrimSpace(row[colMap["language"]])
 		description := strings.TrimSpace(row[colMap["description"]])
 		seriesName := strings.TrimSpace(row[colMap["series_name"]])
 		seriesPositionStr := strings.TrimSpace(row[colMap["series_position"]])
+
+		// Clean numeric values (remove .0 suffix from float formatting in CSV)
+		isbn10 = strings.TrimSuffix(isbn10, ".0")
+		isbn13 = strings.TrimSuffix(isbn13, ".0")
+		pagesStr = strings.TrimSuffix(pagesStr, ".0")
+		seriesPositionStr = strings.TrimSuffix(seriesPositionStr, ".0")
 		genres := strings.TrimSpace(row[colMap["genres"]])
 		tags := strings.TrimSpace(row[colMap["tags"]])
 		imageURL := strings.TrimSpace(row[colMap["image_url"]])
