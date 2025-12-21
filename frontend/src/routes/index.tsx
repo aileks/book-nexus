@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { IconBook } from "@tabler/icons-react";
 import { SearchBar } from "@/components/search";
 
@@ -77,6 +77,27 @@ function HomePage() {
           </div>
         </div>
       </main>
+      <footer className="border-t py-6 mt-auto">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4  text-muted-foreground">
+            <p>© {new Date().getFullYear()} Book Nexus</p>
+            <span className="hidden sm:inline">•</span>
+            <Link
+              to="/docs"
+              className="hover:text-foreground transition-colors underline-offset-4 hover:underline"
+            >
+              API Documentation
+            </Link>
+            <span className="hidden sm:inline">•</span>
+            <Link
+              to="/playground"
+              className="hover:text-foreground transition-colors underline-offset-4 hover:underline"
+            >
+              GraphQL Playground
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

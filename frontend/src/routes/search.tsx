@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { ControlledSearchBar } from "@/components/search/SearchBar";
 import {
   BookCard,
@@ -100,13 +100,22 @@ function SearchResultsPage() {
       <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/70 sticky top-0 z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-5">
           <div className="max-w-3xl mx-auto">
-            <ControlledSearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSubmit={handleSearch}
-              placeholder="Search books, authors, series..."
-              autoFocus
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <ControlledSearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onSubmit={handleSearch}
+                  placeholder="Search books, authors, series..."
+                  autoFocus
+                />
+              </div>
+              <Link to="/docs">
+                <Button variant="outline" size="sm">
+                  View Docs
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>

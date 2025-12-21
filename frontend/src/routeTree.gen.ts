@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as PlaygroundRouteImport } from './routes/playground'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SeriesSlugRouteImport } from './routes/series.$slug'
@@ -19,6 +21,16 @@ import { Route as AuthorSlugRouteImport } from './routes/author.$slug'
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlaygroundRoute = PlaygroundRouteImport.update({
+  id: '/playground',
+  path: '/playground',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -50,6 +62,8 @@ const AuthorSlugRoute = AuthorSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/docs': typeof DocsRoute
+  '/playground': typeof PlaygroundRoute
   '/search': typeof SearchRoute
   '/author/$slug': typeof AuthorSlugRoute
   '/book/$id': typeof BookIdRoute
@@ -58,6 +72,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/docs': typeof DocsRoute
+  '/playground': typeof PlaygroundRoute
   '/search': typeof SearchRoute
   '/author/$slug': typeof AuthorSlugRoute
   '/book/$id': typeof BookIdRoute
@@ -67,6 +83,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/docs': typeof DocsRoute
+  '/playground': typeof PlaygroundRoute
   '/search': typeof SearchRoute
   '/author/$slug': typeof AuthorSlugRoute
   '/book/$id': typeof BookIdRoute
@@ -77,6 +95,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/docs'
+    | '/playground'
     | '/search'
     | '/author/$slug'
     | '/book/$id'
@@ -85,6 +105,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/docs'
+    | '/playground'
     | '/search'
     | '/author/$slug'
     | '/book/$id'
@@ -93,6 +115,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/docs'
+    | '/playground'
     | '/search'
     | '/author/$slug'
     | '/book/$id'
@@ -102,6 +126,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  DocsRoute: typeof DocsRoute
+  PlaygroundRoute: typeof PlaygroundRoute
   SearchRoute: typeof SearchRoute
   AuthorSlugRoute: typeof AuthorSlugRoute
   BookIdRoute: typeof BookIdRoute
@@ -115,6 +141,20 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/playground': {
+      id: '/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof PlaygroundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -158,6 +198,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  DocsRoute: DocsRoute,
+  PlaygroundRoute: PlaygroundRoute,
   SearchRoute: SearchRoute,
   AuthorSlugRoute: AuthorSlugRoute,
   BookIdRoute: BookIdRoute,
