@@ -51,7 +51,9 @@ function DocsPage() {
           {/* API Overview */}
           <Card>
             <CardHeader>
-              <CardTitle>API Overview</CardTitle>
+              <CardTitle className={cn("text-2xl font-bold")}>
+                API Overview
+              </CardTitle>
               <CardDescription>
                 Book Nexus provides a GraphQL API for querying book data,
                 authors, publishers, and series.
@@ -59,13 +61,13 @@ function DocsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="font-semibold mb-2">Endpoint</h3>
+                <h3 className="text-xl font-semibold mb-2">Local Endpoint</h3>
                 <code className="block p-3 rounded-md bg-muted  font-mono">
                   {apiUrl}
                 </code>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Authentication</h3>
+                <h3 className="text-xl font-semibold mb-2">Authentication</h3>
                 <p className="text-muted-foreground">
                   The public API does not require authentication. All queries
                   documented here are publicly accessible. Mutations (create,
@@ -74,14 +76,14 @@ function DocsPage() {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Request Format</h3>
+                <h3 className="text-xl font-semibold mb-2">Request Format</h3>
                 <p className="text-muted-foreground mb-2">
                   Send POST requests with JSON body containing{" "}
                   <code className="bg-muted px-1 rounded">query</code> and
                   optional{" "}
                   <code className="bg-muted px-1 rounded">variables</code>:
                 </p>
-                <pre className="p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                <pre className="p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                   {`{
   "query": "query { books(limit: 5) { id title } }",
   "variables": {}
@@ -94,7 +96,9 @@ function DocsPage() {
           {/* Available Queries */}
           <Card>
             <CardHeader>
-              <CardTitle>Available Queries</CardTitle>
+              <CardTitle className={cn("text-2xl font-bold")}>
+                Available Queries
+              </CardTitle>
               <CardDescription>
                 All publicly available GraphQL queries
               </CardDescription>
@@ -102,11 +106,11 @@ function DocsPage() {
             <CardContent className="space-y-8">
               {/* Books Queries */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Books</h3>
+                <h3 className="text-xl font-semibold mb-4">Books</h3>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-2">books</h4>
+                    <h4 className="text-lg font-medium mb-2">books</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a paginated list of books.
                     </p>
@@ -125,8 +129,8 @@ function DocsPage() {
                         </ul>
                       </div>
                       <div>
-                        <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <span className="font-medium">Example:</span>
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   books(limit: 10, offset: 0) {
     id
@@ -146,7 +150,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">book</h4>
+                    <h4 className="text-lg font-medium mb-2">book</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single book by ID.
                     </p>
@@ -161,7 +165,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   book(id: "1") {
     id
@@ -193,7 +197,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">searchBooks</h4>
+                    <h4 className="text-lg font-medium mb-2">searchBooks</h4>
                     <p className=" text-muted-foreground mb-3">
                       Search books with filters and sorting options.
                     </p>
@@ -243,7 +247,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   searchBooks(input: {
     query: "fantasy"
@@ -275,11 +279,11 @@ function DocsPage() {
 
               {/* Authors Queries */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Authors</h3>
+                <h3 className="text-xl font-semibold mb-4">Authors</h3>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-2">authors</h4>
+                    <h4 className="text-lg font-medium mb-2">authors</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a paginated list of authors.
                     </p>
@@ -303,7 +307,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   authors(search: "Tolkien", limit: 10) {
     id
@@ -320,7 +324,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">author</h4>
+                    <h4 className="text-lg font-medium mb-2">author</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single author by ID.
                     </p>
@@ -335,7 +339,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   author(id: "1") {
     id
@@ -358,7 +362,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">authorBySlug</h4>
+                    <h4 className="text-lg font-medium mb-2">authorBySlug</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single author by slug.
                     </p>
@@ -374,7 +378,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   authorBySlug(slug: "j-r-r-tolkien") {
     id
@@ -399,11 +403,11 @@ function DocsPage() {
 
               {/* Publishers Queries */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Publishers</h3>
+                <h3 className="text-xl font-semibold mb-4">Publishers</h3>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-2">publishers</h4>
+                    <h4 className="text-lg font-medium mb-2">publishers</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a paginated list of publishers.
                     </p>
@@ -427,7 +431,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   publishers(search: "Harper", limit: 10) {
     id
@@ -444,7 +448,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">publisher</h4>
+                    <h4 className="text-lg font-medium mb-2">publisher</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single publisher by ID.
                     </p>
@@ -459,7 +463,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   publisher(id: "1") {
     id
@@ -481,7 +485,9 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">publisherBySlug</h4>
+                    <h4 className="text-lg font-medium mb-2">
+                      publisherBySlug
+                    </h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single publisher by slug.
                     </p>
@@ -497,7 +503,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   publisherBySlug(slug: "harper-collins") {
     id
@@ -522,11 +528,11 @@ function DocsPage() {
 
               {/* Series Queries */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Series</h3>
+                <h3 className="text-xl font-semibold mb-4">Series</h3>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-2">seriesList</h4>
+                    <h4 className="text-lg font-medium mb-2">seriesList</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a paginated list of series.
                     </p>
@@ -550,7 +556,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   seriesList(search: "Lord", limit: 10) {
     id
@@ -567,7 +573,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">series</h4>
+                    <h4 className="text-lg font-medium mb-2">series</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single series by ID.
                     </p>
@@ -582,7 +588,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   series(id: "1") {
     id
@@ -608,7 +614,7 @@ function DocsPage() {
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium mb-2">seriesBySlug</h4>
+                    <h4 className="text-lg font-medium mb-2">seriesBySlug</h4>
                     <p className=" text-muted-foreground mb-3">
                       Get a single series by slug.
                     </p>
@@ -624,7 +630,7 @@ function DocsPage() {
                       </div>
                       <div>
                         <span className=" font-medium">Example:</span>
-                        <pre className="mt-2 p-3 rounded-md bg-muted  font-mono overflow-x-auto">
+                        <pre className="mt-2 p-3 rounded-md bg-muted text-sm font-mono overflow-x-auto">
                           {`query {
   seriesBySlug(slug: "lord-of-the-rings") {
     id

@@ -12,6 +12,8 @@ Book Nexus is a modern book discovery engine providing a single GraphQL entrypoi
 - **Author Pages**: Explore author profiles with their complete bibliography
 - **Series Information**: View book series with proper ordering
 - **Smart Recommendations**: Get book recommendations based on your interests
+- **API Documentation**: Comprehensive documentation of all public GraphQL queries at `/docs`
+- **GraphQL Playground**: Interactive playground for testing GraphQL queries at `/playground`
 - **Mobile-Friendly**: Responsive design that works on all devices
 - **Admin Panel**: Manage books, authors, publishers, and series through a secure admin interface
 - **Modern UI**: Built with shadcn/ui components and Tailwind CSS
@@ -151,6 +153,17 @@ pnpm run dev
 ```
 
 The frontend will be available at `http://localhost:5173`.
+
+### Available Routes
+
+- **Home** (`/`): Search and browse books
+- **Search** (`/search`): Advanced search with filters
+- **Book Details** (`/book/:id`): Individual book pages
+- **Author Pages** (`/author/:slug`): Author profiles and bibliographies
+- **Series Pages** (`/series/:slug`): Series information and book listings
+- **API Documentation** (`/docs`): Complete documentation of all public GraphQL queries
+- **GraphQL Playground** (`/playground`): Interactive playground for testing GraphQL queries
+- **Admin Panel** (`/admin`): Content management interface
 
 ## Project Structure
 
