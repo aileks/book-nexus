@@ -101,8 +101,8 @@ export function SeriesTab() {
     setEditingSeries(series);
     setFormData({
       name: series.name,
-      slug: series.slug,
-      description: series.description,
+      slug: series.slug ?? null,
+      description: series.description ?? null,
     });
     setIsCreating(false);
     setMutationError(null);

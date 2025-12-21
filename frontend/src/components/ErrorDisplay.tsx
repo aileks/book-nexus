@@ -51,7 +51,7 @@ export function LoadingError({ onRetry }: { onRetry?: () => void }) {
     <ErrorDisplay
       title="Failed to load"
       message="We couldn't load the data. Please check your connection and try again."
-      onRetry={onRetry}
+      {...(onRetry && { onRetry })}
     />
   );
 }
@@ -61,7 +61,7 @@ export function NetworkError({ onRetry }: { onRetry?: () => void }) {
     <ErrorDisplay
       title="Network Error"
       message="Unable to connect to the server. Please check your internet connection."
-      onRetry={onRetry}
+      {...(onRetry && { onRetry })}
     />
   );
 }

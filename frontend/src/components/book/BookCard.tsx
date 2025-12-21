@@ -53,7 +53,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
           <div className="pt-2">
             <SeriesBadge
               seriesName={book.series.name}
-              position={book.seriesPosition}
+              position={book.seriesPosition ?? null}
             />
           </div>
         )}

@@ -61,7 +61,7 @@ export function parseGraphQLError(error: unknown): ApiError {
 
     if (graphqlErrors && graphqlErrors.length > 0) {
       const firstError = graphqlErrors[0];
-      const message = firstError.message || "An error occurred";
+      const message = firstError?.message || "An error occurred";
 
       // Check for specific error types
       if (message.includes("not found") || message.includes("no rows")) {

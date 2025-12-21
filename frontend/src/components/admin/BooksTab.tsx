@@ -107,12 +107,12 @@ export function BooksTab() {
     setEditingBook(book);
     setFormData({
       title: book.title,
-      subtitle: book.subtitle,
+      subtitle: book.subtitle ?? null,
       authorId: book.author.id,
-      seriesId: book.series?.id ?? undefined,
-      seriesPosition: book.seriesPosition,
-      publishedDate: book.publishedDate,
-      imageUrl: book.imageUrl,
+      seriesId: book.series?.id ?? null,
+      seriesPosition: book.seriesPosition ?? null,
+      publishedDate: book.publishedDate ?? null,
+      imageUrl: book.imageUrl ?? null,
     });
     setIsCreating(false);
     setMutationError(null);
@@ -229,7 +229,7 @@ export function BooksTab() {
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    seriesId: value ? (value as string) : undefined,
+                    seriesId: value ? (value as string) : null,
                   })
                 }
               >
@@ -261,7 +261,7 @@ export function BooksTab() {
                     ...formData,
                     seriesPosition: e.target.value
                       ? Number(e.target.value)
-                      : undefined,
+                      : null,
                   })
                 }
               />

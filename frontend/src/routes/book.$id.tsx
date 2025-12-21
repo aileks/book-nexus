@@ -181,7 +181,7 @@ function BookDetailPage() {
                   icon={<IconBuilding className="w-5 h-5" />}
                   label="Publisher"
                   value={book.publisher.name}
-                  link={book.publisher.website}
+                  link={book.publisher.website ?? null}
                 />
               )}
               {book.publishedDate && (

@@ -101,8 +101,8 @@ export function AuthorsTab() {
     setEditingAuthor(author);
     setFormData({
       name: author.name,
-      slug: author.slug,
-      bio: author.bio,
+      slug: author.slug ?? null,
+      bio: author.bio ?? null,
     });
     setIsCreating(false);
     setMutationError(null);

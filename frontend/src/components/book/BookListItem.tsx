@@ -40,7 +40,7 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
             {book.series && (
               <SeriesBadge
                 seriesName={book.series.name}
-                position={book.seriesPosition}
+                position={book.seriesPosition ?? null}
               />
             )}
           </div>
