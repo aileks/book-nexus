@@ -138,12 +138,12 @@ function AuthorPage() {
                     {book.title}
                   </p>
                   {book.subtitle && (
-                    <p className="text-sm text-muted-foreground line-clamp-1">
+                    <p className="text-muted-foreground line-clamp-1">
                       {book.subtitle}
                     </p>
                   )}
                   {book.series && (
-                    <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 mt-1 text-muted-foreground">
                       <IconStack2 className="w-4 h-4" />
                       <span>
                         {book.series.name}
@@ -152,7 +152,7 @@ function AuthorPage() {
                     </div>
                   )}
                   {book.publishedDate && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-muted-foreground mt-1">
                       {new Date(book.publishedDate).getFullYear()}
                     </p>
                   )}

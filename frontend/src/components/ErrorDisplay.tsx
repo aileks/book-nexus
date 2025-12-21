@@ -73,7 +73,7 @@ type InlineErrorProps = {
 
 export function InlineError({ message, onRetry }: InlineErrorProps) {
   return (
-    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-sm">
+    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
       <div className="flex items-center justify-between gap-4">
         <span className="text-destructive">{message}</span>
         {onRetry && (

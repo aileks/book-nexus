@@ -27,17 +27,15 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
           {book.title}
         </h3>
         {book.subtitle && (
-          <p className="text-sm sm:text-base text-muted-foreground line-clamp-1">
-            {book.subtitle}
-          </p>
+          <p className="text-muted-foreground line-clamp-1">{book.subtitle}</p>
         )}
-        <div className="flex items-center gap-2 text-sm sm:text-base text-muted-foreground mt-1">
+        <div className="flex items-center gap-2 text-muted-foreground mt-1">
           <IconUser className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
           <span className="line-clamp-1">{book.author.name}</span>
         </div>
 
         {(book.publisher || book.series) && (
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-muted-foreground">
             {book.publisher && <span>{book.publisher.name}</span>}
             {book.series && (
               <SeriesBadge
@@ -56,7 +54,7 @@ export function BookListItem({ book, onClick }: BookListItemProps) {
               .map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs sm:text-sm bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
+                  className="bg-secondary text-secondary-foreground px-2 py-0.5 rounded"
                 >
                   {tag.trim()}
                 </span>
@@ -87,7 +85,7 @@ type SeriesBadgeProps = {
 
 function SeriesBadge({ seriesName, position }: SeriesBadgeProps) {
   return (
-    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
+    <span className="bg-primary/10 text-primary px-2 py-0.5 rounded font-medium">
       {position ? `${seriesName} #${position}` : seriesName}
     </span>
   );

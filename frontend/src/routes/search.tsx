@@ -143,7 +143,7 @@ function SearchResultsPage() {
                     )}
                   </h3>
                   {totalPages > 1 && (
-                    <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+                    <p className="text-muted-foreground mt-1">
                       Page {page} of {totalPages}
                     </p>
                   )}
@@ -157,7 +157,7 @@ function SearchResultsPage() {
                   <select
                     value={genre}
                     onChange={(e) => handleGenreChange(e.target.value)}
-                    className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="h-9 rounded-md border border-input bg-background px-3 focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="">All Genres</option>
                     {GENRES.map((g) => (
@@ -173,7 +173,7 @@ function SearchResultsPage() {
                     onChange={(e) =>
                       handleSortChange(e.target.value as SortOption | "")
                     }
-                    className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="h-9 rounded-md border border-input bg-background px-3 focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     {SORT_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>

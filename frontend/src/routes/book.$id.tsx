@@ -152,7 +152,7 @@ function BookDetailPage() {
                     )}
                   </span>
                   {book.series.bookCount > 1 && (
-                    <Badge variant="secondary" className="text-xs sm:text-sm">
+                    <Badge variant="secondary">
                       {book.series.bookCount} books
                     </Badge>
                   )}
@@ -240,7 +240,7 @@ function BookDetailPage() {
                           >
                             <Badge
                               variant="default"
-                              className="text-sm sm:text-base px-2 sm:px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity"
+                              className="px-2 sm:px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity"
                             >
                               {genre.trim()}
                             </Badge>
@@ -263,7 +263,7 @@ function BookDetailPage() {
                           >
                             <Badge
                               variant="secondary"
-                              className="text-sm sm:text-base px-2 sm:px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity"
+                              className="px-2 sm:px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity"
                             >
                               {tag.trim()}
                             </Badge>
@@ -313,10 +313,10 @@ function BookDetailPage() {
                               <IconBook className="w-10 h-10 text-muted-foreground" />
                             </div>
                           )}
-                          <p className="mt-2 text-sm font-medium line-clamp-2 group-hover:text-primary">
+                          <p className="mt-2 font-medium line-clamp-2 group-hover:text-primary">
                             {rec.title}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground">
                             {rec.author.name}
                           </p>
                         </Link>
@@ -345,7 +345,7 @@ function MetadataItem({ icon, label, value, link }: MetadataItemProps) {
     <div className="flex items-start gap-3">
       <div className="text-muted-foreground mt-0.5">{icon}</div>
       <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-muted-foreground">{label}</p>
         <p className="text-lg font-medium flex items-center gap-1">
           {value}
           {link && <IconExternalLink className="w-4 h-4" />}

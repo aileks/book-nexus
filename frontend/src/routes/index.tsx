@@ -51,7 +51,7 @@ function HomePage() {
 
           {/* Browse by Genre */}
           <div className="mb-8 space-y-3">
-            <p className="text-sm text-muted-foreground">Browse by genre:</p>
+            <p className="text-muted-foreground">Browse by genre:</p>
             <div className="flex flex-wrap justify-center gap-2">
               {GENRES.map((item) => (
                 <button
@@ -68,7 +68,7 @@ function HomePage() {
           {/* Limited selection notice */}
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-4 py-3 rounded-md bg-muted/50 border border-border">
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-muted-foreground text-center">
                 <span className="font-medium text-foreground">Note:</span> We
                 currently have a limited selection of books. We're working on
                 adding more in the future!

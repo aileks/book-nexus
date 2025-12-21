@@ -148,16 +148,16 @@ function SeriesPage() {
                     {book.title}
                   </h3>
                   {book.subtitle && (
-                    <p className="text-sm sm:text-base text-muted-foreground line-clamp-1 break-words">
+                    <p className="text-muted-foreground line-clamp-1 break-words">
                       {book.subtitle}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
+                  <div className="flex items-center gap-2 mt-1 sm:mt-2 text-muted-foreground">
                     <IconUser className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                     <span className="truncate">{book.author.name}</span>
                   </div>
                   {book.publishedDate && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                    <p className="text-muted-foreground mt-1">
                       Published {new Date(book.publishedDate).getFullYear()}
                     </p>
                   )}

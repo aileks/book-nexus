@@ -64,7 +64,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
               .split(",")
               .slice(0, 3)
               .map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge key={tag} variant="secondary">
                   {tag.trim()}
                 </Badge>
               ))}
@@ -92,7 +92,7 @@ type SeriesBadgeProps = {
 
 function SeriesBadge({ seriesName, position }: SeriesBadgeProps) {
   return (
-    <Badge variant="outline" className="text-xs">
+    <Badge variant="outline">
       {position ? `${seriesName} #${position}` : seriesName}
     </Badge>
   );
