@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { IconSearch, IconX } from "@tabler/icons-react";
 
@@ -26,14 +26,21 @@ export function SearchBar({
   autoFocus = false,
 }: SearchBarProps) {
   const [query, setQuery] = useState(defaultValue);
+  // Use ref to avoid triggering effect when onSearch changes reference
+  const onSearchRef = useRef(onSearch);
+
+  // Update ref in an effect to avoid lint warning
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onSearch(query);
+      onSearchRef.current(query);
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [query, debounceMs, onSearch]);
+  }, [query, debounceMs]);
 
   const clearSearch = () => {
     setQuery("");

@@ -10,14 +10,16 @@ export function BackToSearch({ bookId }: BackToSearchProps) {
   // If bookId is provided, link back to that book
   if (bookId) {
     return (
-      <Link
-        to="/book/$id"
-        params={{ id: bookId }}
-        className="inline-flex items-center gap-2 text-base hover:underline mb-4"
-      >
-        <IconArrowLeft className="w-5 h-5" />
-        <span>Back to book</span>
-      </Link>
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-3 -mt-3 mb-3">
+        <Link
+          to="/book/$id"
+          params={{ id: bookId }}
+          className="inline-flex items-center gap-2 text-base hover:underline"
+        >
+          <IconArrowLeft className="w-5 h-5" />
+          <span>Back to book</span>
+        </Link>
+      </div>
     );
   }
 
@@ -40,13 +42,15 @@ export function BackToSearch({ bookId }: BackToSearchProps) {
       : "Back to search";
 
   return (
-    <Link
-      to="/search"
-      search={searchParams}
-      className="inline-flex items-center gap-2 text-base hover:underline mb-4"
-    >
-      <IconArrowLeft className="w-5 h-5" />
-      <span>{displayText}</span>
-    </Link>
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-3 -mt-3 mb-3">
+      <Link
+        to="/search"
+        search={searchParams}
+        className="inline-flex items-center gap-2 text-base hover:underline"
+      >
+        <IconArrowLeft className="w-5 h-5" />
+        <span>{displayText}</span>
+      </Link>
+    </div>
   );
 }

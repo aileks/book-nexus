@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from "@/components/ui/combobox";
 import { InlineError } from "@/components/ErrorDisplay";
 import { Pagination } from "@/components/search/Pagination";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -42,19 +43,11 @@ export function BooksTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
-  const prevSearchQueryRef = useRef<string>("");
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setCurrentPage(1);
   };
-
-  // Reset to page 1 only when search query actually changes
-  useEffect(() => {
-    if (prevSearchQueryRef.current !== searchQuery) {
-      prevSearchQueryRef.current = searchQuery;
-      setCurrentPage(1);
-    }
-  }, [searchQuery]);
 
   const totalPages = Math.ceil((books?.length || 0) / ITEMS_PER_PAGE);
   const paginatedBooks = books?.slice(
@@ -219,57 +212,55 @@ export function BooksTab() {
             </div>
             <div className="space-y-2">
               <Label>Author *</Label>
-              <Select
-                value={(formData.authorId ?? undefined) || ""}
+              <Combobox
+                value={formData.authorId || null}
                 onValueChange={(value) =>
                   setFormData({ ...formData, authorId: value as string })
                 }
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an author">
-                    {formData.authorId
-                      ? authors?.find((a) => a.id === formData.authorId)?.name
-                      : ""}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {authors?.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxInput
+                  placeholder="Search authors..."
+                  className="w-full"
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    <ComboboxEmpty>No authors found</ComboboxEmpty>
+                    {authors?.map((a) => (
+                      <ComboboxItem key={a.id} value={a.id}>
+                        {a.name}
+                      </ComboboxItem>
+                    ))}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
             <div className="space-y-2">
               <Label>Series</Label>
-              <Select
-                value={(formData.seriesId ?? undefined) || "none"}
+              <Combobox
+                value={formData.seriesId || null}
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    seriesId: value === "none" ? undefined : (value as string),
+                    seriesId: value ? (value as string) : undefined,
                   })
                 }
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a series">
-                    {formData.seriesId && formData.seriesId !== "none"
-                      ? seriesList?.find((s) => s.id === formData.seriesId)?.name
-                      : formData.seriesId === "none" || !formData.seriesId
-                        ? "No series"
-                        : ""}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No series</SelectItem>
-                  {seriesList?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxInput
+                  placeholder="Search series..."
+                  className="w-full"
+                  showClear
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    <ComboboxEmpty>No series found</ComboboxEmpty>
+                    {seriesList?.map((s) => (
+                      <ComboboxItem key={s.id} value={s.id}>
+                        {s.name}
+                      </ComboboxItem>
+                    ))}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
             <div className="space-y-2">
               <Label htmlFor="seriesPosition">Series Position</Label>

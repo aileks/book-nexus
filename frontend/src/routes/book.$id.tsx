@@ -233,13 +233,18 @@ function BookDetailPage() {
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {book.genres.split(",").map((genre) => (
-                          <Badge
+                          <Link
                             key={genre}
-                            variant="default"
-                            className="text-sm sm:text-base px-2 sm:px-3 py-1"
+                            to="/search"
+                            search={{ genre: genre.trim(), q: "", page: 1 }}
                           >
-                            {genre.trim()}
-                          </Badge>
+                            <Badge
+                              variant="default"
+                              className="text-sm sm:text-base px-2 sm:px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity"
+                            >
+                              {genre.trim()}
+                            </Badge>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -251,13 +256,18 @@ function BookDetailPage() {
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {book.tags.split(",").map((tag) => (
-                          <Badge
+                          <Link
                             key={tag}
-                            variant="secondary"
-                            className="text-sm sm:text-base px-2 sm:px-3 py-1"
+                            to="/search"
+                            search={{ q: tag.trim(), genre: "", page: 1 }}
                           >
-                            {tag.trim()}
-                          </Badge>
+                            <Badge
+                              variant="secondary"
+                              className="text-sm sm:text-base px-2 sm:px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity"
+                            >
+                              {tag.trim()}
+                            </Badge>
+                          </Link>
                         ))}
                       </div>
                     </div>
