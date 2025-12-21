@@ -5,9 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { setAdminPassword } from "@/lib/graphql/admin";
 
-interface AdminLoginProps {
+type AdminLoginProps = {
   onLogin: () => void;
-}
+};
 
 export function AdminLogin({ onLogin }: AdminLoginProps) {
   const [password, setPassword] = useState("");

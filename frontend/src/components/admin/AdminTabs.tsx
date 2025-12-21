@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type Tab = "books" | "authors" | "series";
 
-interface AdminTabsProps {
+type AdminTabsProps = {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
-}
+};
 
 export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
   return (
@@ -13,10 +14,10 @@ export function AdminTabs({ activeTab, onTabChange }: AdminTabsProps) {
       {(["books", "authors", "series"] as const).map((tab) => (
         <Button
           key={tab}
-          variant={activeTab === tab ? "default" : "outline"}
+          variant={activeTab === tab ? "default" : "secondary"}
           onClick={() => onTabChange(tab)}
           size="sm"
-          className="flex-1 sm:flex-initial"
+          className={cn("flex-1 sm:flex-initial cursor-pointer")}
         >
           {tab.charAt(0).toUpperCase() + tab.slice(1)}
         </Button>

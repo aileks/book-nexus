@@ -132,33 +132,11 @@ export function BooksTab() {
     setMutationError(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-6">
-        <InlineError
-          message={
-            getErrorMessage(error) ||
-            "Error loading books. Check your admin password."
-          }
-          onRetry={() => refetch()}
-        />
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <h2 className="text-base sm:text-lg font-semibold">
-          Books ({books?.length || 0})
+          Books {!isLoading && `(${books?.length || 0})`}
         </h2>
         <Button onClick={startCreate} size="sm" className="w-full sm:w-auto">
           Add Book
@@ -177,6 +155,16 @@ export function BooksTab() {
         <InlineError
           message={mutationError}
           onRetry={() => setMutationError(null)}
+        />
+      )}
+
+      {error && (
+        <InlineError
+          message={
+            getErrorMessage(error) ||
+            "Error loading books. Check your admin password."
+          }
+          onRetry={() => refetch()}
         />
       )}
 
@@ -340,47 +328,56 @@ export function BooksTab() {
               </tr>
             </thead>
             <tbody>
-              {paginatedBooks?.map((book) => (
-                <tr
-                  key={book.id}
-                  className="border-b last:border-b-0 hover:bg-muted/50"
-                >
-                  <td className="p-2 sm:p-3">
-                    <div className="font-medium">{book.title}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground sm:hidden mt-1">
-                      {book.author?.name}
-                    </div>
-                  </td>
-                  <td className="p-2 sm:p-3 text-muted-foreground hidden sm:table-cell">
-                    {book.author?.name}
-                  </td>
-                  <td className="p-2 sm:p-3 text-muted-foreground hidden md:table-cell">
-                    {book.series
-                      ? `${book.series.name} #${book.seriesPosition}`
-                      : "-"}
-                  </td>
-                  <td className="p-2 sm:p-3 text-right">
-                    <div className="flex justify-end gap-1 sm:gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startEdit(book)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteClick(book)}
-                        disabled={deleteBook.isPending}
-                      >
-                        Delete
-                      </Button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="p-6">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                     </div>
                   </td>
                 </tr>
-              ))}
-              {(!paginatedBooks || paginatedBooks.length === 0) && (
+              ) : paginatedBooks?.length ? (
+                paginatedBooks.map((book) => (
+                  <tr
+                    key={book.id}
+                    className="border-b last:border-b-0 hover:bg-muted/50"
+                  >
+                    <td className="p-2 sm:p-3">
+                      <div className="font-medium">{book.title}</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground sm:hidden mt-1">
+                        {book.author?.name}
+                      </div>
+                    </td>
+                    <td className="p-2 sm:p-3 text-muted-foreground hidden sm:table-cell">
+                      {book.author?.name}
+                    </td>
+                    <td className="p-2 sm:p-3 text-muted-foreground hidden md:table-cell">
+                      {book.series
+                        ? `${book.series.name} #${book.seriesPosition}`
+                        : "-"}
+                    </td>
+                    <td className="p-2 sm:p-3 text-right">
+                      <div className="flex justify-end gap-1 sm:gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(book)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteClick(book)}
+                          disabled={deleteBook.isPending}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td
                     colSpan={4}

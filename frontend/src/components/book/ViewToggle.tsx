@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 
 export type ViewMode = "list" | "cards";
 
-interface ViewToggleProps {
+type ViewToggleProps = {
   value: ViewMode;
   onChange: (mode: ViewMode) => void;
   className?: string;
-}
+};
 
 export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
   return (

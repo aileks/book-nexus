@@ -2,21 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { IconSearch, IconX } from "@tabler/icons-react";
 
-interface SearchBarProps {
+type SearchBarProps = {
   onSearch: (query: string) => void;
   placeholder?: string;
   debounceMs?: number;
   defaultValue?: string;
   autoFocus?: boolean;
-}
+};
 
-interface ControlledSearchBarProps {
+type ControlledSearchBarProps = {
   value: string;
   onChange: (query: string) => void;
   onSubmit: (query: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
-}
+};
 
 export function SearchBar({
   onSearch,

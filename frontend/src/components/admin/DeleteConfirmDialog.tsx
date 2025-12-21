@@ -9,16 +9,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteConfirmDialogProps<
+type DeleteConfirmDialogProps<
   T extends { id: string; name?: string; title?: string },
-> {
+> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: T | null;
   itemType: string;
   onConfirm: () => void;
   isPending?: boolean;
-}
+};
 
 export function DeleteConfirmDialog<
   T extends { id: string; name?: string; title?: string },

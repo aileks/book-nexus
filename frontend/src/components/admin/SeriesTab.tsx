@@ -122,33 +122,11 @@ export function SeriesTab() {
     setMutationError(null);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-6">
-        <InlineError
-          message={
-            getErrorMessage(error) ||
-            "Error loading series. Check your admin password."
-          }
-          onRetry={() => refetch()}
-        />
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <h2 className="text-base sm:text-lg font-semibold">
-          Series ({seriesList?.length || 0})
+          Series {!isLoading && `(${seriesList?.length || 0})`}
         </h2>
         <Button onClick={startCreate} size="sm" className="w-full sm:w-auto">
           Add Series
@@ -167,6 +145,16 @@ export function SeriesTab() {
         <InlineError
           message={mutationError}
           onRetry={() => setMutationError(null)}
+        />
+      )}
+
+      {error && (
+        <InlineError
+          message={
+            getErrorMessage(error) ||
+            "Error loading series. Check your admin password."
+          }
+          onRetry={() => refetch()}
         />
       )}
 
@@ -251,43 +239,52 @@ export function SeriesTab() {
               </tr>
             </thead>
             <tbody>
-              {paginatedSeries?.map((series) => (
-                <tr
-                  key={series.id}
-                  className="border-b last:border-b-0 hover:bg-muted/50"
-                >
-                  <td className="p-2 sm:p-3">
-                    <div className="font-medium">{series.name}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground md:hidden mt-1">
-                      {series.slug || "-"}
-                    </div>
-                  </td>
-                  <td className="p-2 sm:p-3 text-muted-foreground hidden md:table-cell">
-                    {series.slug || "-"}
-                  </td>
-                  <td className="p-2 sm:p-3">{series.bookCount}</td>
-                  <td className="p-2 sm:p-3 text-right">
-                    <div className="flex justify-end gap-1 sm:gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startEdit(series)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteClick(series)}
-                        disabled={deleteSeries.isPending}
-                      >
-                        Delete
-                      </Button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="p-6">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                     </div>
                   </td>
                 </tr>
-              ))}
-              {(!paginatedSeries || paginatedSeries.length === 0) && (
+              ) : paginatedSeries?.length ? (
+                paginatedSeries.map((series) => (
+                  <tr
+                    key={series.id}
+                    className="border-b last:border-b-0 hover:bg-muted/50"
+                  >
+                    <td className="p-2 sm:p-3">
+                      <div className="font-medium">{series.name}</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground md:hidden mt-1">
+                        {series.slug || "-"}
+                      </div>
+                    </td>
+                    <td className="p-2 sm:p-3 text-muted-foreground hidden md:table-cell">
+                      {series.slug || "-"}
+                    </td>
+                    <td className="p-2 sm:p-3">{series.bookCount}</td>
+                    <td className="p-2 sm:p-3 text-right">
+                      <div className="flex justify-end gap-1 sm:gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(series)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteClick(series)}
+                          disabled={deleteSeries.isPending}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td
                     colSpan={4}

@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { IconArrowLeft } from "@tabler/icons-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { getLastSearch } from "@/lib/useLastSearch";
 
 type BackToSearchProps = {
@@ -14,7 +16,7 @@ export function BackToSearch({ bookId }: BackToSearchProps) {
         <Link
           to="/book/$id"
           params={{ id: bookId }}
-          className="inline-flex items-center gap-2 text-base hover:underline"
+          className={cn(buttonVariants({ variant: "link" }), "gap-2 px-0")}
         >
           <IconArrowLeft className="w-5 h-5" />
           <span>Back to book</span>
@@ -46,7 +48,7 @@ export function BackToSearch({ bookId }: BackToSearchProps) {
       <Link
         to="/search"
         search={searchParams}
-        className="inline-flex items-center gap-2 text-base hover:underline"
+        className={cn(buttonVariants({ variant: "link" }), "gap-2 px-0")}
       >
         <IconArrowLeft className="w-5 h-5" />
         <span>{displayText}</span>

@@ -2,12 +2,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-interface ErrorDisplayProps {
+type ErrorDisplayProps = {
   title?: string;
   message?: string;
   onRetry?: () => void;
   showHomeLink?: boolean;
-}
+};
 
 export function ErrorDisplay({
   title = "Something went wrong",
@@ -66,10 +66,10 @@ export function NetworkError({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-interface InlineErrorProps {
+type InlineErrorProps = {
   message: string;
   onRetry?: () => void;
-}
+};
 
 export function InlineError({ message, onRetry }: InlineErrorProps) {
   return (

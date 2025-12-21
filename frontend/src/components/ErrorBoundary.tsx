@@ -1,15 +1,15 @@
 import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
-interface ErrorBoundaryProps {
+type ErrorBoundaryProps = {
   children: ReactNode;
   fallback?: ReactNode;
-}
+};
 
-interface ErrorBoundaryState {
+type ErrorBoundaryState = {
   hasError: boolean;
   error: Error | null;
-}
+};
 
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,

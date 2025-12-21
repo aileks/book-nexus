@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { clearAdminPassword } from "@/lib/graphql/admin";
 
-interface AdminHeaderProps {
+type AdminHeaderProps = {
   onLogout: () => void;
-}
+};
 
 export function AdminHeader({ onLogout }: AdminHeaderProps) {
   const handleLogout = () => {
