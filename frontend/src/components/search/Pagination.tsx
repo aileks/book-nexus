@@ -35,7 +35,7 @@ export function Pagination({
           return (
             <span
               key={`ellipsis-${index}`}
-              className="px-1 sm:px-2 text-muted-foreground text-sm sm:text-base"
+              className="px-1 sm:px-2 text-muted-foreground"
             >
               ...
             </span>
@@ -47,7 +47,7 @@ export function Pagination({
             key={page}
             variant={page === currentPage ? "default" : "outline"}
             onClick={() => onPageChange(page as number)}
-            className="min-w-8 sm:min-w-10 h-8 sm:h-9 text-sm sm:text-base"
+            className="min-w-8 sm:min-w-10 h-8 sm:h-9"
           >
             {page}
           </Button>

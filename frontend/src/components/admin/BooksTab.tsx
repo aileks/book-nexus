@@ -314,7 +314,7 @@ export function BooksTab() {
 
       <Card>
         <div className="overflow-x-auto -mx-1 sm:mx-0">
-          <table className="w-full text-sm sm:text-base">
+          <table className="w-full">
             <thead className="border-b">
               <tr>
                 <th className="text-left p-2 sm:p-3 font-medium">Title</th>
@@ -344,7 +344,7 @@ export function BooksTab() {
                   >
                     <td className="p-2 sm:p-3">
                       <div className="font-medium">{book.title}</div>
-                      <div className="text-xs sm:text-sm text-muted-foreground sm:hidden mt-1">
+                      <div className="text-muted-foreground sm:hidden mt-1">
                         {book.author?.name}
                       </div>
                     </td>

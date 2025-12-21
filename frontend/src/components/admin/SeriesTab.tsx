@@ -227,7 +227,7 @@ export function SeriesTab() {
 
       <Card>
         <div className="overflow-x-auto -mx-1 sm:mx-0">
-          <table className="w-full text-sm sm:text-base">
+          <table className="w-full">
             <thead className="border-b">
               <tr>
                 <th className="text-left p-2 sm:p-3 font-medium">Name</th>
@@ -255,7 +255,7 @@ export function SeriesTab() {
                   >
                     <td className="p-2 sm:p-3">
                       <div className="font-medium">{series.name}</div>
-                      <div className="text-xs sm:text-sm text-muted-foreground md:hidden mt-1">
+                      <div className="text-muted-foreground md:hidden mt-1">
                         {series.slug || "-"}
                       </div>
                     </td>
